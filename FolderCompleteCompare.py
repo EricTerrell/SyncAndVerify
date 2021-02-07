@@ -1,0 +1,146 @@
+"""
+  SyncAndVerify
+  (C) Copyright 2021, Eric Bergman-Terrell
+
+  This file is part of SyncAndVerify.
+
+  SyncAndVerify is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    SyncAndVerify is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    See the GNU General Public License: <http://www.gnu.org/licenses/>.
+"""
+
+import os
+import concurrent.futures
+from collections import namedtuple
+from FileHash import FileHash, ERROR_MARKER
+from VerifyPaths import VerifyPaths
+from Globals import app_globals
+from AppException import AppException
+
+
+class FolderCompleteCompare:
+    @staticmethod
+    def compare(source_path, destination_path, threads=1):
+        try:
+            source_path, destination_path = VerifyPaths.verify(source_path, destination_path, True)
+
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=threads)
+
+            future_source = executor.submit(FolderCompleteCompare._create_file_hashes, source_path)
+            future_destination = executor.submit(FolderCompleteCompare._create_file_hashes, destination_path)
+
+            executor.shutdown(wait=True)
+
+            (source_hashes, destination_hashes) = future_source.result(), future_destination.result()
+
+            # in source only
+            files_in_source_folder_only = source_hashes.keys() - destination_hashes.keys()
+
+            # in destination only
+            files_in_destination_folder_only = destination_hashes.keys() - source_hashes.keys()
+
+            files_in_both_folders = source_hashes.keys() & destination_hashes.keys()
+
+            # source and destination files have different hashes
+            different_files = set()
+
+            identical_files = set()
+
+            # source and/or destination file could not be read to be hashed
+            could_not_read_files = set()
+
+            for file in files_in_both_folders:
+                source_hash = source_hashes[file]
+                destination_hash = destination_hashes[file]
+
+                if source_hash == ERROR_MARKER or destination_hash == ERROR_MARKER:
+                    could_not_read_files.add(file)
+                else:
+                    if source_hash != destination_hash:
+                        different_files.add(file)
+                    else:
+                        identical_files.add(file)
+
+            differences = len(files_in_source_folder_only) + len(files_in_destination_folder_only) + len(
+                could_not_read_files) + len(different_files)
+
+            CompleteComparison = namedtuple('CompleteComparison',
+                                            ['files_in_source_folder_only', 'files_in_destination_folder_only',
+                                             'files_in_both_folders', 'identical_files', 'different_files',
+                                             'could_not_read_files', 'source_hashes', 'destination_hashes', 'differences'])
+
+            return CompleteComparison(files_in_source_folder_only, files_in_destination_folder_only, files_in_both_folders,
+                                      identical_files, different_files, could_not_read_files, source_hashes,
+                                      destination_hashes, differences)
+        except (IOError, OSError) as exception:
+            raise AppException(f'{exception}', exception)
+
+    @staticmethod
+    def _create_file_hashes(root_path):
+        file_hashes = {}
+
+        root_path_string = f'{root_path}'
+
+        walk = os.walk(root_path, True, FolderCompleteCompare._error)
+
+        file_hash = FileHash()
+
+        for dir_path, dir_names, file_names in walk:
+            for file_name in file_names:
+                file_full_path = os.path.join(dir_path, file_name)
+                file_full_path_string = f'{file_full_path}'
+                file_short_path = file_full_path_string[len(root_path_string):len(file_full_path_string)]
+                file_hashes[file_short_path] = file_hash.create_file_hash(file_full_path)
+
+        return file_hashes
+
+    @staticmethod
+    def _error(self, exception):
+        raise AppException(f'FolderCompleteCompare Error: root: "{self.root}" exception: {exception}', exception)
+
+    @staticmethod
+    def display_results(comparison):
+        if len(comparison.files_in_source_folder_only) > 0:
+            # in source only
+            app_globals.log.print(f'\tFiles in Source Folder Only: {len(comparison.files_in_source_folder_only):,}')
+            FolderCompleteCompare._print_file_paths(comparison.files_in_source_folder_only)
+
+        if len(comparison.files_in_destination_folder_only) > 0:
+            # in destination only
+            app_globals.log.print(f'\n\tFiles in Destination Folder Only: {len(comparison.files_in_destination_folder_only):,}')
+            FolderCompleteCompare._print_file_paths(comparison.files_in_destination_folder_only)
+
+        if len(comparison.files_in_both_folders) != len(comparison.identical_files) or \
+                len(comparison.different_files) > 0 or len(comparison.could_not_read_files) > 0:
+            # in both source and destination
+            app_globals.log.print(
+                f'\n\tFiles in Source and Destination Folders: {len(comparison.files_in_both_folders):,} Identical: {len(comparison.identical_files):,} Different: {len(comparison.different_files):,} Read Errors: {len(comparison.could_not_read_files):,}')
+
+        for file in comparison.different_files:
+            source_hash = comparison.source_hashes[file]
+            destination_hash = comparison.destination_hashes[file]
+
+            if source_hash != destination_hash:
+                app_globals.log.print(f'\tFILES ARE DIFFERENT: {file} {source_hash} {destination_hash}')
+
+        for file in comparison.could_not_read_files:
+            source_hash = comparison.source_hashes[file]
+            destination_hash = comparison.destination_hashes[file]
+
+            if source_hash != destination_hash:
+                app_globals.log.print(f'\tCOULD NOT READ FILE(S): {file} {source_hash} {destination_hash}')
+
+        app_globals.log.print(f'\tDifferences (complete compare): {comparison.differences}')
+
+    @staticmethod
+    def _print_file_paths(path_set):
+        for path in path_set:
+            app_globals.log.print(f'\t\t{path}')
