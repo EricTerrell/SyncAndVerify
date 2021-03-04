@@ -68,17 +68,17 @@ def main():
             app_globals.log.print(StringLiterals.EMPTY_STRING)
 
             if verb == 'QC':
-                app_globals.log.print(f'Comparing (quick) {source_path} and {destination_path} ({threads} threads) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Comparing (quick) "{source_path}" and "{destination_path}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
 
                 comparison = FolderQuickCompare.compare(source_path, destination_path, threads)
                 FolderQuickCompare.display_results(comparison)
             elif verb == 'CC':
-                app_globals.log.print(f'Comparing (complete) {source_path} and {destination_path} ({threads} threads) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Comparing (complete) "{source_path}" and "{destination_path}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
 
                 comparison = FolderCompleteCompare.compare(source_path, destination_path, threads)
                 FolderCompleteCompare.display_results(comparison)
             elif verb == 'S':
-                app_globals.log.print(f'Syncing {source_path} to {destination_path} ({threads} threads) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Syncing "{source_path}" to "{destination_path}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
 
                 FolderSync.sync(source_path, destination_path, threads)
         except (AppException, OSError, KeyboardInterrupt) as exception:

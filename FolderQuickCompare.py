@@ -94,19 +94,19 @@ class FolderQuickCompare:
             app_globals.log.print(f'\tFolders to Delete: ({len(comparison.folders_to_delete):,})')
 
             for folder in comparison.folders_to_delete:
-                app_globals.log.print(f'\t\t{folder}')
+                app_globals.log.print(f'\t\t"{folder}"')
 
         if len(comparison.folders_to_create) > 0:
-            app_globals.log.print(f'\n\tFolders to Create: ({len(comparison.folders_to_create):,})')
+            app_globals.log.print(f'\tFolders to Create: ({len(comparison.folders_to_create):,})')
 
             for folder in comparison.folders_to_create:
-                app_globals.log.print(f'\t\t{folder}')
+                app_globals.log.print(f'\t\t"{folder}"')
 
         if len(comparison.files_to_delete) > 0:
             app_globals.log.print(f'\n\tFiles to Delete: ({len(comparison.files_to_delete):,})')
 
             for file in comparison.files_to_delete:
-                app_globals.log.print(f'\t\t{file}')
+                app_globals.log.print(f'\t\t"{file}"')
 
         bytes_to_copy = sum(value.metadata.st_size for value in comparison.files_to_copy_metadata.values())
 
@@ -115,7 +115,7 @@ class FolderQuickCompare:
                 f'\tFiles to Copy: {len(comparison.files_to_copy):,} Bytes to Copy: {bytes_to_copy:,}')
 
             for file in comparison.files_to_copy:
-                app_globals.log.print(f'\t\t{file}')
+                app_globals.log.print(f'\t\t"{file}"')
 
         app_globals.log.print(f'\tDifferences (quick compare): {comparison.differences:,}')
 

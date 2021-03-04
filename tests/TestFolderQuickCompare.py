@@ -55,22 +55,25 @@ class TestFolderQuickCompare(BaseTest):
 
     @unittest.skip('integration test')
     def test_compare_actual_folders(self):
+        source_root = 'D:'
+        dest_root = 'G:\\Backup'
+
         paths = (
-            ('D:\\Repositories', 'E:\\Backup\\svn'),
-            ('D:\\Dropbox', 'E:\\Backup\\Dropbox'),
-            ('D:\\Eric', 'E:\\Backup\\Eric'),
-            ('Z:\\Barb', 'D:\\Barb'),
-            ('Z:\\Barb', 'E:\\Backup\\Barb'),
-            ('Z:\\Photos', 'D:\\Photos'),
-            ('Z:\\Photos', 'E:\\Backup\\Photos'),
-            ('Z:\\Media\\DVDs', 'E:\\Backup\\Media\\DVDs'),
-            ('D:\\Media', 'E:\\Backup\\Media')
+            ('D:\\Repositories', f'{dest_root}\\svn'),
+            ('D:\\Dropbox',      f'{dest_root}\\Dropbox'),
+            ('D:\\Eric',         f'{dest_root}\\Eric'),
+            ('Z:\\Barb',         f'{source_root}\\Barb'),
+            ('Z:\\Barb',         f'{dest_root}\\Barb'),
+            ('Z:\\Photos',       f'{source_root}\\Photos'),
+            ('Z:\\Photos',       f'{dest_root}\\Backup\\Photos'),
+            ('Z:\\Media\\DVDs',  f'{dest_root}\\Media\\DVDs'),
+            ('D:\\Media',        f'{dest_root}\\Media')
         )
 
         start_time = time.perf_counter()
 
         for pair in paths:
-            print(f'\nComparing {pair[0]} and {pair[1]}\n')
+            print(f'\nComparing "{pair[0]}" and "{pair[1]}"\n')
 
             comparison = FolderQuickCompare.compare(pair[0], pair[1])
 

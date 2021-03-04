@@ -41,6 +41,15 @@ class FolderCompleteCompare:
 
             (source_hashes, destination_hashes) = future_source.result(), future_destination.result()
 
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=threads)
+
+            future_source = executor.submit(FolderCompleteCompare._get_folders, source_path)
+            future_destination = executor.submit(FolderCompleteCompare._get_folders, destination_path)
+
+            executor.shutdown(wait=True)
+
+            (source_folders, destination_folders) = future_source.result(), future_destination.result()
+
             # in source only
             files_in_source_folder_only = source_hashes.keys() - destination_hashes.keys()
 
@@ -72,14 +81,37 @@ class FolderCompleteCompare:
             differences = len(files_in_source_folder_only) + len(files_in_destination_folder_only) + len(
                 could_not_read_files) + len(different_files)
 
-            CompleteComparison = namedtuple('CompleteComparison',
-                                            ['files_in_source_folder_only', 'files_in_destination_folder_only',
-                                             'files_in_both_folders', 'identical_files', 'different_files',
-                                             'could_not_read_files', 'source_hashes', 'destination_hashes', 'differences'])
+            folders_in_source_folder_only = source_folders - destination_folders
+            folders_in_destination_folder_only = destination_folders - source_folders
 
-            return CompleteComparison(files_in_source_folder_only, files_in_destination_folder_only, files_in_both_folders,
-                                      identical_files, different_files, could_not_read_files, source_hashes,
-                                      destination_hashes, differences)
+            folders_in_both_folders = source_folders.intersection(destination_folders)
+
+            CompleteComparison = namedtuple('CompleteComparison',
+                                            ['folders_in_source_folder_only',
+                                             'folders_in_destination_folder_only',
+                                             'folders_in_both_folders',
+                                             'files_in_source_folder_only',
+                                             'files_in_destination_folder_only',
+                                             'files_in_both_folders',
+                                             'identical_files',
+                                             'different_files',
+                                             'could_not_read_files',
+                                             'source_hashes',
+                                             'destination_hashes',
+                                             'differences'])
+
+            return CompleteComparison(folders_in_source_folder_only,
+                                      folders_in_destination_folder_only,
+                                      folders_in_both_folders,
+                                      files_in_source_folder_only,
+                                      files_in_destination_folder_only,
+                                      files_in_both_folders,
+                                      identical_files,
+                                      different_files,
+                                      could_not_read_files,
+                                      source_hashes,
+                                      destination_hashes,
+                                      differences)
         except (IOError, OSError) as exception:
             raise AppException(f'{exception}', exception)
 
@@ -103,20 +135,43 @@ class FolderCompleteCompare:
         return file_hashes
 
     @staticmethod
+    def _get_folders(root_path):
+        folders = set()
+
+        walk = os.walk(root_path, True, FolderCompleteCompare._error)
+
+        for dir_path, dir_names, file_names in walk:
+            if dir_path != root_path:
+                abbreviated_path = dir_path[len(root_path):len(dir_path)]
+                folders.add(abbreviated_path)
+
+        return folders
+
+    @staticmethod
     def _error(self, exception):
         raise AppException(f'FolderCompleteCompare Error: root: "{self.root}" exception: {exception}', exception)
 
     @staticmethod
     def display_results(comparison):
+        if len(comparison.folders_in_source_folder_only) > 0:
+            # folders in source only
+            app_globals.log.print(f'\tFolders in Source Folder Only: {len(comparison.folders_in_source_folder_only):,}')
+            FolderCompleteCompare._print_paths(comparison.folders_in_source_folder_only)
+
+        if len(comparison.folders_in_destination_folder_only) > 0:
+            # folders in source only
+            app_globals.log.print(f'\tFolders in Destination Folder Only: {len(comparison.folders_in_destination_folder_only):,}')
+            FolderCompleteCompare._print_paths(comparison.folders_in_destination_folder_only)
+
         if len(comparison.files_in_source_folder_only) > 0:
-            # in source only
+            # files in source only
             app_globals.log.print(f'\tFiles in Source Folder Only: {len(comparison.files_in_source_folder_only):,}')
-            FolderCompleteCompare._print_file_paths(comparison.files_in_source_folder_only)
+            FolderCompleteCompare._print_paths(comparison.files_in_source_folder_only)
 
         if len(comparison.files_in_destination_folder_only) > 0:
-            # in destination only
+            # files in destination only
             app_globals.log.print(f'\n\tFiles in Destination Folder Only: {len(comparison.files_in_destination_folder_only):,}')
-            FolderCompleteCompare._print_file_paths(comparison.files_in_destination_folder_only)
+            FolderCompleteCompare._print_paths(comparison.files_in_destination_folder_only)
 
         if len(comparison.files_in_both_folders) != len(comparison.identical_files) or \
                 len(comparison.different_files) > 0 or len(comparison.could_not_read_files) > 0:
@@ -129,18 +184,18 @@ class FolderCompleteCompare:
             destination_hash = comparison.destination_hashes[file]
 
             if source_hash != destination_hash:
-                app_globals.log.print(f'\tFILES ARE DIFFERENT: {file} {source_hash} {destination_hash}')
+                app_globals.log.print(f'\tFILES ARE DIFFERENT: file: "{file}" source hash: "{source_hash}" destination hash: "{destination_hash}"')
 
         for file in comparison.could_not_read_files:
             source_hash = comparison.source_hashes[file]
             destination_hash = comparison.destination_hashes[file]
 
             if source_hash != destination_hash:
-                app_globals.log.print(f'\tCOULD NOT READ FILE(S): {file} {source_hash} {destination_hash}')
+                app_globals.log.print(f'\tCOULD NOT READ FILE(S): file: "{file}" source hash: "{source_hash}" destination hash: "{destination_hash}"')
 
         app_globals.log.print(f'\tDifferences (complete compare): {comparison.differences}')
 
     @staticmethod
-    def _print_file_paths(path_set):
+    def _print_paths(path_set):
         for path in path_set:
-            app_globals.log.print(f'\t\t{path}')
+            app_globals.log.print(f'\t\t"{path}"')

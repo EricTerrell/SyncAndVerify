@@ -21,6 +21,7 @@ import hashlib
 from tenacity import *
 from Globals import app_globals
 from Constants import Constants
+from AppException import AppException
 
 
 def before_callback(retry_state):
@@ -46,12 +47,20 @@ class FileHash:
         try:
             with open(path, 'rb') as file:
                 hash_algorithm = FileHash._get_hash_algorithm()
+                hash_algorithm_characters = hash_algorithm.digest_size * 2
 
                 while True:
                     file_bytes = file.read(self.BLOCK_SIZE)
 
                     if len(file_bytes) == 0:
-                        return hash_algorithm.hexdigest()
+                        result = hash_algorithm.hexdigest()
+
+                        # Paranoia code
+                        if len(result) != hash_algorithm_characters or len(result) == 0 or \
+                                len(result.strip()) != hash_algorithm_characters:
+                            raise AppException(f'Incorrect hash length: {len(result)} hash: "{result}" hash_algorithm_characters: {hash_algorithm_characters}')
+
+                        return result
 
                     hash_algorithm.update(file_bytes)
 
