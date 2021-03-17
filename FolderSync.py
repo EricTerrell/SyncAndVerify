@@ -38,7 +38,7 @@ class FolderSync:
                 os.makedirs(destination_path)
 
             comparison = FolderQuickCompare.compare(source_path, destination_path, threads)
-            FolderQuickCompare.summarize_results(comparison)
+            app_globals.log.print(f'\t{FolderQuickCompare.summary(comparison)}')
 
             if comparison.differences > 0:
                 FolderSync._delete_folders(comparison, destination_path)
@@ -50,8 +50,7 @@ class FolderSync:
                 post_sync_comparison = FolderQuickCompare.compare(source_path, destination_path, threads)
 
                 app_globals.log.print('\tSynced')
-
-                FolderQuickCompare.summarize_results(post_sync_comparison)
+                app_globals.log.print(f'\tChecking Sync: {FolderQuickCompare.summary(post_sync_comparison)}')
 
                 if post_sync_comparison.differences > 0:
                     error_message = f'{StringLiterals.ERROR_PREFIX}: Source folder is not fully synced'

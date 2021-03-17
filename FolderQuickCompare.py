@@ -120,10 +120,10 @@ class FolderQuickCompare:
         app_globals.log.print(f'\tDifferences (quick compare): {comparison.differences:,}')
 
     @staticmethod
-    def summarize_results(comparison):
+    def summary(comparison):
         bytes_to_copy = sum(value.metadata.st_size for value in comparison.files_to_copy_metadata.values())
 
-        app_globals.log.print(f'\tFolders to Delete: {len(comparison.folders_to_delete):,} Folders to Create: {len(comparison.folders_to_create):,} Files to Delete: {len(comparison.files_to_delete):,} Files to Copy: {len(comparison.files_to_copy):,} Bytes to Copy: {bytes_to_copy:,} Total Differences: {comparison.differences:,}')
+        return f'Folders to Delete: {len(comparison.folders_to_delete):,} Folders to Create: {len(comparison.folders_to_create):,} Files to Delete: {len(comparison.files_to_delete):,} Files to Copy: {len(comparison.files_to_copy):,} Bytes to Copy: {bytes_to_copy:,} Total Differences: {comparison.differences:,}'
 
     @staticmethod
     def _file_in_folders(file, folders):
