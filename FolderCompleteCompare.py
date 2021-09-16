@@ -18,7 +18,7 @@
 """
 
 import os
-import concurrent.futures
+from Executor import Executor
 from collections import namedtuple
 from FileHash import FileHash, ERROR_MARKER
 from VerifyPaths import VerifyPaths
@@ -32,7 +32,7 @@ class FolderCompleteCompare:
         try:
             source_path, destination_path = VerifyPaths.verify(source_path, destination_path, True)
 
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=threads)
+            executor = Executor.create(threads)
 
             future_source = executor.submit(FolderCompleteCompare._create_file_hashes, source_path)
             future_destination = executor.submit(FolderCompleteCompare._create_file_hashes, destination_path)
@@ -41,7 +41,7 @@ class FolderCompleteCompare:
 
             (source_hashes, destination_hashes) = future_source.result(), future_destination.result()
 
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=threads)
+            executor = Executor.create(threads)
 
             future_source = executor.submit(FolderCompleteCompare._get_folders, source_path)
             future_destination = executor.submit(FolderCompleteCompare._get_folders, destination_path)

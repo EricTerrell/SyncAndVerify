@@ -20,7 +20,7 @@
 import os
 from collections import namedtuple
 from FolderMetadata import FolderMetadata
-import concurrent.futures
+from Executor import Executor
 from VerifyPaths import VerifyPaths
 from Globals import app_globals
 from AppException import AppException
@@ -32,7 +32,7 @@ class FolderQuickCompare:
         try:
             source_path, destination_path = VerifyPaths.verify(source_path, destination_path, True)
 
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=threads)
+            executor = Executor.create(threads)
 
             def get_metadata(root): return FolderMetadata(root)
 
