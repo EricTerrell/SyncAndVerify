@@ -81,7 +81,8 @@ def main():
                 app_globals.log.print(f'Syncing "{source_path}" to "{destination_path}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
 
                 FolderSync.sync(source_path, destination_path, threads)
-        except (AppException, OSError, KeyboardInterrupt) as exception:
+
+        except (AppException, OSError, KeyboardInterrupt, BaseException) as exception:
             if isinstance(exception, KeyboardInterrupt):
                 error_message_text = StringLiterals.USER_CANCELLED
             else:
@@ -90,6 +91,7 @@ def main():
             error_message = f'\n{StringLiterals.ERROR_PREFIX}: {error_message_text}\n'
             app_globals.log.print(error_message)
             sys.exit(Constants.EXIT_FAILURE)
+
         finally:
             app_globals.log.print(f'\nElapsed Time: {DateTimeUtils.format_timedelta(timedelta(seconds=time.perf_counter() - start_time))}')
             app_globals.log.print(f'\nFinished at {DateTimeUtils.format_date_time()}\n')
@@ -97,6 +99,7 @@ def main():
             PowerManagement.allow_sleep()
             app_globals.log.close()
             sys.exit()
+
     else:
         print_usage_and_exit()
 
