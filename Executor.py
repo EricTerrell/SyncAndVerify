@@ -19,9 +19,13 @@
 
 import concurrent.futures
 
+"""
+concurrent.futures.ThreadPoolExecutor:  subject to the GIL (Global Interpreter Lock)
+concurrent.futures.ProcessPoolExecutor: not subject to GIL
+"""
+
 
 class Executor:
     @staticmethod
     def create(threads):
-        # Don't use ProcessPoolExecutor, some of the functions return objects that are not picklable.
-        return concurrent.futures.ThreadPoolExecutor(max_workers=threads)
+        return concurrent.futures.ProcessPoolExecutor(max_workers=threads)

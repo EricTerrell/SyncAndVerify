@@ -34,10 +34,8 @@ class FolderQuickCompare:
 
             executor = Executor.create(threads)
 
-            def get_metadata(root): return FolderMetadata(root)
-
-            future_source_metadata = executor.submit(get_metadata, source_path)
-            future_destination_metadata = executor.submit(get_metadata, destination_path)
+            future_source_metadata = executor.submit(FolderQuickCompare.get_metadata, source_path)
+            future_destination_metadata = executor.submit(FolderQuickCompare.get_metadata, destination_path)
 
             executor.shutdown(wait=True)
 
@@ -82,11 +80,17 @@ class FolderQuickCompare:
                                          ['folders_to_delete', 'folders_to_create', 'files_to_delete', 'files_to_copy',
                                           'files_to_copy_metadata', 'differences'])
 
-            return QuickComparison(sorted(folders_to_delete), sorted(folders_to_create),
+            result = QuickComparison(sorted(folders_to_delete), sorted(folders_to_create),
                                    sorted(files_to_delete), sorted(files_to_copy_metadata.keys()),
                                    files_to_copy_metadata, differences)
-        except (IOError, OSError) as exception:
+
+            return result
+        except (IOError, OSError, BaseException) as exception:
             raise AppException(f'{exception}', exception)
+
+    @staticmethod
+    def get_metadata(root):
+        return FolderMetadata(root)
 
     @staticmethod
     def display_results(comparison):
