@@ -60,7 +60,7 @@ class FolderSync:
             else:
                 app_globals.log.print('\tNo Need to Sync')
 
-        except (RetryError, IOError, OSError) as exception:
+        except (RetryError, IOError, OSError, BaseException) as exception:
             raise AppException(f'{exception}', exception)
 
         return comparison

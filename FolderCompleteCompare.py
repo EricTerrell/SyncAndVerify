@@ -112,7 +112,7 @@ class FolderCompleteCompare:
                                       source_hashes,
                                       destination_hashes,
                                       differences)
-        except (IOError, OSError) as exception:
+        except (IOError, OSError, BaseException) as exception:
             raise AppException(f'{exception}', exception)
 
     @staticmethod
