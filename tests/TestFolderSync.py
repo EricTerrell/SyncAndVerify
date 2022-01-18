@@ -42,7 +42,7 @@ class TestFolderSync(BaseTest):
     @unittest.skip('integration test')
     def test_sync_actual_folder(self):
         source_path = 'Z:\\Photos'
-        destination_path = 'F:\\backup-test\Photos'
+        destination_path = 'F:\\backup-test\\Photos'
 
         FolderSync.sync(source_path, destination_path)
 

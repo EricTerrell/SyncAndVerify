@@ -17,6 +17,7 @@
     See the GNU General Public License: <http://www.gnu.org/licenses/>.
 """
 
+
 class Globals:
     def __init__(self):
         self.log = None

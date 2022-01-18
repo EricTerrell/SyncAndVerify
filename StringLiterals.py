@@ -17,6 +17,7 @@
     See the GNU General Public License: <http://www.gnu.org/licenses/>.
 """
 
+
 class StringLiterals:
     PLATFORM_WINDOWS = 'Windows'
     ERROR_PREFIX = '***** ERROR *****'

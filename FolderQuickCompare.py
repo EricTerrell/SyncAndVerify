@@ -81,8 +81,8 @@ class FolderQuickCompare:
                                           'files_to_copy_metadata', 'differences'])
 
             result = QuickComparison(sorted(folders_to_delete), sorted(folders_to_create),
-                                   sorted(files_to_delete), sorted(files_to_copy_metadata.keys()),
-                                   files_to_copy_metadata, differences)
+                                     sorted(files_to_delete), sorted(files_to_copy_metadata.keys()),
+                                     files_to_copy_metadata, differences)
 
             return result
         except (IOError, OSError, BaseException) as exception:
