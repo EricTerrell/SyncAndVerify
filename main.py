@@ -20,6 +20,8 @@
 import os
 import sys
 import time
+import traceback
+
 from FolderQuickCompare import FolderQuickCompare
 from FolderCompleteCompare import FolderCompleteCompare
 from FolderSync import FolderSync
@@ -82,11 +84,14 @@ def main():
 
                 FolderSync.sync(source_path, destination_path, threads)
 
-        except (AppException, OSError, KeyboardInterrupt, BaseException) as exception:
+        except (AppException, OSError, KeyboardInterrupt, BaseException, ZeroDivisionError) as exception:
             if isinstance(exception, KeyboardInterrupt):
                 error_message_text = StringLiterals.USER_CANCELLED
             else:
-                error_message_text = f'{exception}'
+                error_message_text = f'{exception.__class__.__name__}\n\targs: {exception.args}\n\tcause: {exception.__cause__}\n\tcontext: {exception.__context__}\n\ttraceback: {traceback.format_exc()}'
+
+            if isinstance(exception, ZeroDivisionError):
+                app_globals.log.print(traceback.format_exc())
 
             error_message = f'\n{StringLiterals.ERROR_PREFIX}: {error_message_text}\n'
             app_globals.log.print(error_message)
