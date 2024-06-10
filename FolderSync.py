@@ -18,6 +18,7 @@
 """
 
 import os
+import stat
 import shutil
 from tenacity import RetryError
 from FileSystemUtils import FileSystemUtils
@@ -66,16 +67,29 @@ class FolderSync:
         return comparison
 
     @staticmethod
+    def _delete_readonly_file(action, path, exc):
+        if not os.access(path, os.W_OK):
+            os.chmod(path, stat.S_IWRITE)
+            action(path)
+        else:
+            raise
+
+    @staticmethod
     def _delete_folders(comparison, destination_path):
         for folder in comparison.folders_to_delete:
             full_path = os.path.join(destination_path, folder)
-            shutil.rmtree(full_path, ignore_errors=False)
+            shutil.rmtree(full_path, onerror=FolderSync._delete_readonly_file)
 
     @staticmethod
     def _delete_files(comparison, destination_path):
         for file in comparison.files_to_delete:
             full_path = os.path.join(destination_path, file)
-            os.remove(full_path)
+
+            try:
+                os.remove(full_path)
+            except PermissionError:
+                os.chmod(full_path, stat.S_IWRITE)
+                os.remove(full_path)
 
     @staticmethod
     def _create_folders(comparison, destination_path):

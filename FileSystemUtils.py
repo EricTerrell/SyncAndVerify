@@ -18,6 +18,7 @@
 """
 
 import os
+import stat
 import win32file
 import win32api
 import win32con
@@ -79,7 +80,11 @@ class FileSystemUtils:
            before=copy_file_before_callback)
     def copy_file(source_file_path, destination_file_path):
         if os.path.exists(destination_file_path):
-            os.remove(destination_file_path)
+            try:
+                os.remove(destination_file_path)
+            except PermissionError:
+                os.chmod(destination_file_path, stat.S_IWRITE)
+                os.remove(destination_file_path)
 
         shutil.copy2(source_file_path, destination_file_path)
 
