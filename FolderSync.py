@@ -114,11 +114,16 @@ class FolderSync:
             files_copied += 1
             bytes_copied += comparison.files_to_copy_metadata[file].metadata.st_size
 
+            if bytes_to_copy != 0:
+                bytes_percent = (bytes_copied * 100) / bytes_to_copy
+            else:
+                bytes_percent = 100.0
+
             app_globals.log.print('\t\tFiles: ({:,}/{:,} {:.2f}%) Bytes: ({:,}/{:,} {:.2f}%)'.format(
                 files_copied,
                 len(comparison.files_to_copy_metadata),
                 (files_copied * 100) / len(comparison.files_to_copy_metadata),
                 bytes_copied,
                 bytes_to_copy,
-                (bytes_copied * 100) / bytes_to_copy
+                bytes_percent
             ), standard_output=False)
