@@ -16,50 +16,48 @@
 
     See the GNU General Public License: <http://www.gnu.org/licenses/>.
 """
-
+import os
 import unittest
-import pathlib
+import shutil
 from BaseTest import BaseTest
 from FolderSync import FolderSync
-from FolderMetadata import FolderMetadata
 from FolderCompleteCompare import FolderCompleteCompare
 from FolderQuickCompare import FolderQuickCompare
 
 
-class TestFolderSync(BaseTest):
-    _exclusions = []
-
-    def test_sync(self):
-        source_path = pathlib.Path(self.get_temp_folder(), 'folders/source')
-        destination_path = pathlib.Path(self.get_temp_folder(), 'folders/destination')
-
-        FolderSync.sync(source_path, destination_path, TestFolderSync._exclusions)
-
-        source_metadata = FolderMetadata(source_path, TestFolderSync._exclusions)
-        destination_metadata = FolderMetadata(destination_path, TestFolderSync._exclusions)
-
-        self.assertEqual(len(source_metadata.metadata[0]), len(destination_metadata.metadata[0]))
-        self.assertEqual(len(source_metadata.metadata[1]), len(destination_metadata.metadata[1]))
-
+class TestErrorHandling(BaseTest):
     @unittest.skip('integration test')
-    def test_sync_actual_folder(self):
-        source_path = 'Z:\\Photos'
-        destination_path = 'F:\\backup-test\\Photos'
+    def test_ignore_specified_errors(self):
+        source_path = 'C:\\Users\\Eric Terrell\\Dropbox'
+        destination_path = 'I:\\Dropbox'
+        exclusions = ['.dropbox.cache', '__EXCLUDE__\\__ME__']
 
-        FolderSync.sync(source_path, destination_path, TestFolderSync._exclusions)
+        if os.path.isdir(destination_path):
+            shutil.rmtree(destination_path, onerror=FolderSync._delete_readonly_file)
 
-        comparison = FolderQuickCompare.compare(source_path, destination_path, TestFolderSync._exclusions)
+        os.mkdir(destination_path)
+
+        comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions)
+
+        self.assertTrue(len(comparison.folders_to_create) == 47)
+        self.assertTrue(len(comparison.folders_to_delete) == 0)
+        self.assertTrue(len(comparison.files_to_delete) == 0)
+        self.assertTrue(len(comparison.files_to_copy_metadata) == 704)
+
+        FolderSync.sync(source_path, destination_path, exclusions)
+
+        comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions)
 
         self.assertTrue(len(comparison.folders_to_create) == 0)
         self.assertTrue(len(comparison.folders_to_delete) == 0)
         self.assertTrue(len(comparison.files_to_delete) == 0)
         self.assertTrue(len(comparison.files_to_copy_metadata) == 0)
 
-        comparison = FolderCompleteCompare.compare(source_path, destination_path, TestFolderSync._exclusions)
+        comparison = FolderCompleteCompare.compare(source_path, destination_path, exclusions)
 
         self.assertTrue(len(comparison.files_in_source_folder_only) == 0)
         self.assertTrue(len(comparison.files_in_destination_folder_only) == 0)
-        self.assertTrue(len(comparison.files_in_both_folders) > 0)
+        self.assertTrue(len(comparison.files_in_both_folders) == 704)
         self.assertTrue(len(comparison.different_files) == 0)
         self.assertTrue(len(comparison.could_not_read_files) == 0)
         self.assertTrue(len(comparison.source_hashes) == len(comparison.files_in_both_folders))

@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2021, Eric Bergman-Terrell
+  (C) Copyright 2024, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -26,11 +26,13 @@ from FolderQuickCompare import FolderQuickCompare
 
 
 class TestFolderQuickCompare(BaseTest):
+    _exclusions = []
+
     def test_compare(self):
         source_path = pathlib.Path(self.get_temp_folder(), 'folders/source')
         destination_path = pathlib.Path(self.get_temp_folder(), 'folders/destination')
 
-        comparison = FolderQuickCompare.compare(source_path, destination_path)
+        comparison = FolderQuickCompare.compare(source_path, destination_path, TestFolderQuickCompare._exclusions)
 
         correct_folders_to_delete = ['destination really', 'unique_subfolder_destination']
 
@@ -75,7 +77,7 @@ class TestFolderQuickCompare(BaseTest):
         for pair in paths:
             print(f'\nComparing "{pair[0]}" and "{pair[1]}"\n')
 
-            comparison = FolderQuickCompare.compare(pair[0], pair[1])
+            comparison = FolderQuickCompare.compare(pair[0], pair[1], TestFolderQuickCompare._exclusions)
 
             FolderQuickCompare.display_results(comparison)
 

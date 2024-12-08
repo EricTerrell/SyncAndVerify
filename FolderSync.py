@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2021, Eric Bergman-Terrell
+  (C) Copyright 2024, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -31,14 +31,14 @@ from AppException import AppException
 
 class FolderSync:
     @staticmethod
-    def sync(source_path, destination_path, threads=1):
+    def sync(source_path, destination_path, exclusions, threads=1):
         source_path, destination_path = VerifyPaths.verify(source_path, destination_path)
 
         try:
             if not os.path.exists(destination_path):
                 os.makedirs(destination_path)
 
-            comparison = FolderQuickCompare.compare(source_path, destination_path, threads)
+            comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, threads)
             app_globals.log.print(f'\t{FolderQuickCompare.summary(comparison)}')
 
             if comparison.differences > 0:
@@ -48,7 +48,7 @@ class FolderSync:
                 FolderSync._copy_files(comparison, source_path, destination_path)
 
                 # After backup is complete, re-run quick comparison to verify that everything was completed.
-                post_sync_comparison = FolderQuickCompare.compare(source_path, destination_path, threads)
+                post_sync_comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, threads)
 
                 app_globals.log.print('\tSynced')
                 app_globals.log.print(f'\tChecking Sync: {FolderQuickCompare.summary(post_sync_comparison)}')

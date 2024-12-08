@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2021, Eric Bergman-Terrell
+  (C) Copyright 2024, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -18,6 +18,7 @@
 """
 
 import hashlib
+import os
 from tenacity import *
 from Globals import app_globals
 from Constants import Constants
@@ -43,26 +44,27 @@ class FileHash:
 
     @retry(wait=wait_fixed(Constants.RETRY_WAIT), stop=stop_after_attempt(Constants.MAX_RETRIES),
            before=before_callback, retry_error_callback=return_error_marker)
-    def create_file_hash(self, path):
+    def create_file_hash(self, path, exclusions, root_path):
         try:
-            with open(path, 'rb') as file:
-                hash_algorithm = FileHash._get_hash_algorithm()
-                hash_algorithm_characters = hash_algorithm.digest_size * 2
+            if not FileHash._get_check_folder_path(path, root_path) in exclusions:
+                with open(path, 'rb') as file:
+                    hash_algorithm = FileHash._get_hash_algorithm()
+                    hash_algorithm_characters = hash_algorithm.digest_size * 2
 
-                while True:
-                    file_bytes = file.read(self.BLOCK_SIZE)
+                    while True:
+                        file_bytes = file.read(self.BLOCK_SIZE)
 
-                    if len(file_bytes) == 0:
-                        result = hash_algorithm.hexdigest()
+                        if len(file_bytes) == 0:
+                            result = hash_algorithm.hexdigest()
 
-                        # Paranoia code
-                        if len(result) != hash_algorithm_characters or len(result) == 0 or \
-                                len(result.strip()) != hash_algorithm_characters:
-                            raise AppException(f'Incorrect hash length: {len(result)} hash: "{result}" hash_algorithm_characters: {hash_algorithm_characters}')
+                            # Paranoia code
+                            if len(result) != hash_algorithm_characters or len(result) == 0 or \
+                                    len(result.strip()) != hash_algorithm_characters:
+                                raise AppException(f'Incorrect hash length: {len(result)} hash: "{result}" hash_algorithm_characters: {hash_algorithm_characters}')
 
-                        return result
+                            return result
 
-                    hash_algorithm.update(file_bytes)
+                        hash_algorithm.update(file_bytes)
 
         except OSError as os_error:
             app_globals.log.print(
@@ -70,6 +72,17 @@ class FileHash:
             app_globals.log.print(f'\terrorno: {os_error.errno} winerror: {os_error.winerror} strerror: {os_error.strerror} filename: {os_error.filename}')
 
             raise
+
+    @staticmethod
+    # Return a folder path that matches the format of folder paths in the exclusions list
+    def _get_check_folder_path(path, root_path):
+        check_folder = path[len(root_path) + 1:]
+        sep_pos = check_folder.find(os.path.sep)
+
+        if sep_pos != -1:
+            check_folder = check_folder[:sep_pos]
+
+        return check_folder
 
     @staticmethod
     def _get_hash_algorithm():

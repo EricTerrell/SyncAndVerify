@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2021, Eric Bergman-Terrell
+  (C) Copyright 2024, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -28,14 +28,15 @@ from AppException import AppException
 
 class FolderCompleteCompare:
     @staticmethod
-    def compare(source_path, destination_path, threads=1):
+    def compare(source_path, destination_path, exclusions, threads=1):
         try:
             source_path, destination_path = VerifyPaths.verify(source_path, destination_path, True)
 
             executor = Executor.create(threads)
 
-            future_source = executor.submit(FolderCompleteCompare._create_file_hashes, source_path)
-            future_destination = executor.submit(FolderCompleteCompare._create_file_hashes, destination_path)
+            future_source = executor.submit(FolderCompleteCompare._create_file_hashes, source_path, exclusions)
+            future_destination = executor.submit(FolderCompleteCompare._create_file_hashes, destination_path,
+                                                 exclusions)
 
             executor.shutdown(wait=True)
 
@@ -43,8 +44,8 @@ class FolderCompleteCompare:
 
             executor = Executor.create(threads)
 
-            future_source = executor.submit(FolderCompleteCompare._get_folders, source_path)
-            future_destination = executor.submit(FolderCompleteCompare._get_folders, destination_path)
+            future_source = executor.submit(FolderCompleteCompare._get_folders, source_path, exclusions)
+            future_destination = executor.submit(FolderCompleteCompare._get_folders, destination_path, exclusions)
 
             executor.shutdown(wait=True)
 
@@ -116,7 +117,7 @@ class FolderCompleteCompare:
             raise AppException(f'{exception}', exception)
 
     @staticmethod
-    def _create_file_hashes(root_path):
+    def _create_file_hashes(root_path, exclusions):
         file_hashes = {}
 
         root_path_string = f'{root_path}'
@@ -126,22 +127,27 @@ class FolderCompleteCompare:
         file_hash = FileHash()
 
         for dir_path, dir_names, file_names in walk:
-            for file_name in file_names:
-                file_full_path = os.path.join(dir_path, file_name)
-                file_full_path_string = f'{file_full_path}'
-                file_short_path = file_full_path_string[len(root_path_string):len(file_full_path_string)]
-                file_hashes[file_short_path] = file_hash.create_file_hash(file_full_path)
+            check_folder = dir_path[len(root_path) + 1:]
+
+            if not check_folder in exclusions:
+                for file_name in file_names:
+                    file_full_path = os.path.join(dir_path, file_name)
+                    file_full_path_string = f'{file_full_path}'
+                    file_short_path = file_full_path_string[len(root_path_string):len(file_full_path_string)]
+                    file_hashes[file_short_path] = file_hash.create_file_hash(file_full_path, exclusions, root_path)
 
         return file_hashes
 
     @staticmethod
-    def _get_folders(root_path):
+    def _get_folders(root_path, exclusions):
         folders = set()
 
         walk = os.walk(root_path, True, FolderCompleteCompare._error)
 
         for dir_path, dir_names, file_names in walk:
-            if dir_path != root_path:
+            check_folder = dir_path[len(root_path) + 1:]
+
+            if (not check_folder in exclusions) and (dir_path != root_path):
                 abbreviated_path = dir_path[len(root_path):len(dir_path)]
                 folders.add(abbreviated_path)
 

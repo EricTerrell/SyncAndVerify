@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2021, Eric Bergman-Terrell
+  (C) Copyright 2024, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -24,8 +24,9 @@ from AppException import AppException
 
 
 class FolderMetadata:
-    def __init__(self, root):
+    def __init__(self, root, exclusions):
         self.root = FileSystemUtils.canonical_folder_path(root)
+        self.exclusions = exclusions
         self.metadata = self._get_metadata()
 
     def _get_metadata(self):
@@ -37,7 +38,9 @@ class FolderMetadata:
             for dir_name in dir_names:
                 folder = os.path.join(dir_path, dir_name)
                 folder = folder[len(self.root):len(folder)]
-                folders.append(folder)
+
+                if not folder in self.exclusions:
+                    folders.append(folder)
 
         walk = os.walk(self.root, True, self._error)
 
@@ -47,10 +50,15 @@ class FolderMetadata:
             for file_name in file_names:
                 file_path = os.path.join(dir_path, file_name)
 
-                file_metadata = FileMetadata(self.root, file_path)
-                files[file_metadata.path] = file_metadata
+                if not FolderMetadata._get_check_folder_path(dir_path, self.root) in self.exclusions:
+                    file_metadata = FileMetadata(self.root, file_path)
+                    files[file_metadata.path] = file_metadata
 
         return set(folders), files
+
+    @staticmethod
+    def _get_check_folder_path(path, root_path):
+        return path[len(root_path):]
 
     def _error(self, exception):
         raise AppException(f'FileMetadata Error: root: "{self.root}" exception: {exception}', exception)

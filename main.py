@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2021, Eric Bergman-Terrell
+  (C) Copyright 2024, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -55,6 +55,7 @@ def main():
         destination_path = sys.argv[3]
         log_root = sys.argv[4]
         threads = int(sys.argv[5])
+        exclusions = []
 
         if threads < 1:
             raise AppException('# threads must be >= 1')
@@ -70,19 +71,19 @@ def main():
             app_globals.log.print(StringLiterals.EMPTY_STRING)
 
             if verb == 'QC':
-                app_globals.log.print(f'Comparing (quick) "{source_path}" and "{destination_path}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Comparing (quick) "{source_path}" and "{destination_path}" exclusions: "{exclusions}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
 
-                comparison = FolderQuickCompare.compare(source_path, destination_path, threads)
+                comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, threads)
                 FolderQuickCompare.display_results(comparison)
             elif verb == 'CC':
-                app_globals.log.print(f'Comparing (complete) "{source_path}" and "{destination_path}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Comparing (complete) "{source_path}" and "{destination_path}" exclusions: "{exclusions}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
 
-                comparison = FolderCompleteCompare.compare(source_path, destination_path, threads)
+                comparison = FolderCompleteCompare.compare(source_path, destination_path, exclusions, threads)
                 FolderCompleteCompare.display_results(comparison)
             elif verb == 'S':
-                app_globals.log.print(f'Syncing "{source_path}" to "{destination_path}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Syncing "{source_path}" to "{destination_path}" exclusions: "{exclusions}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
 
-                FolderSync.sync(source_path, destination_path, threads)
+                FolderSync.sync(source_path, destination_path, exclusions, threads)
 
         except (AppException, OSError, KeyboardInterrupt, BaseException, ZeroDivisionError) as exception:
             if isinstance(exception, KeyboardInterrupt):

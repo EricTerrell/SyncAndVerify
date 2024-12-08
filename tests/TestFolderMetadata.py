@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2021, Eric Bergman-Terrell
+  (C) Copyright 2024, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -23,8 +23,10 @@ from BaseTest import BaseTest
 
 
 class TestFolderMetadata(BaseTest):
+    _exclusions = []
+
     def test_metadata_retrieval(self):
-        folder_metadata = FolderMetadata(self.get_temp_folder())
+        folder_metadata = FolderMetadata(self.get_temp_folder(), TestFolderMetadata._exclusions)
 
         folders = folder_metadata.metadata[0]
         files = folder_metadata.metadata[1]

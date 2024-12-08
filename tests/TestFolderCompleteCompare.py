@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2021, Eric Bergman-Terrell
+  (C) Copyright 2024, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -27,11 +27,13 @@ from FolderCompleteCompare import FolderCompleteCompare
 
 
 class TestFolderCompleteCompare(BaseTest):
+    _exclusions = []
+
     def test_compare(self):
         source_path = pathlib.Path(self.get_temp_folder(), 'folders/source')
         destination_path = pathlib.Path(self.get_temp_folder(), 'folders/destination')
 
-        comparison = FolderCompleteCompare.compare(source_path, destination_path)
+        comparison = FolderCompleteCompare.compare(source_path, destination_path, TestFolderCompleteCompare._exclusions)
 
         FolderCompleteCompare.display_results(comparison)
 
@@ -74,7 +76,7 @@ class TestFolderCompleteCompare(BaseTest):
 
             print(f'\nComparing "{pair[0]}" and "{pair[1]}"\n')
 
-            comparison = FolderCompleteCompare.compare(pair[0], pair[1])
+            comparison = FolderCompleteCompare.compare(pair[0], pair[1], TestFolderCompleteCompare._exclusions)
 
             FolderCompleteCompare.display_results(comparison)
 

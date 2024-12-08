@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2021, Eric Bergman-Terrell
+  (C) Copyright 2024, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -28,14 +28,14 @@ from AppException import AppException
 
 class FolderQuickCompare:
     @staticmethod
-    def compare(source_path, destination_path, threads=1):
+    def compare(source_path, destination_path, exclusions, threads=1):
         try:
             source_path, destination_path = VerifyPaths.verify(source_path, destination_path, True)
 
             executor = Executor.create(threads)
 
-            future_source_metadata = executor.submit(FolderQuickCompare.get_metadata, source_path)
-            future_destination_metadata = executor.submit(FolderQuickCompare.get_metadata, destination_path)
+            future_source_metadata = executor.submit(FolderQuickCompare.get_metadata, source_path, exclusions)
+            future_destination_metadata = executor.submit(FolderQuickCompare.get_metadata, destination_path, exclusions)
 
             executor.shutdown(wait=True)
 
@@ -89,8 +89,8 @@ class FolderQuickCompare:
             raise AppException(f'{exception}', exception)
 
     @staticmethod
-    def get_metadata(root):
-        return FolderMetadata(root)
+    def get_metadata(root, exclusions):
+        return FolderMetadata(root, exclusions)
 
     @staticmethod
     def display_results(comparison):
