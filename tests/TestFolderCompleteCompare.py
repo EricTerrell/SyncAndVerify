@@ -38,19 +38,19 @@ class TestFolderCompleteCompare(BaseTest):
         FolderCompleteCompare.display_results(comparison)
 
         self.assertEqual(1, len(comparison.folders_in_both_folders))
-        self.assertTrue('\\common_subfolder' in comparison.folders_in_both_folders)
+        self.assertTrue('common_subfolder' in comparison.folders_in_both_folders)
 
         self.assertEqual(4, len(comparison.folders_in_source_folder_only))
-        self.assertTrue('\\source really' in comparison.folders_in_source_folder_only)
-        self.assertTrue('\\source really\\nested' in comparison.folders_in_source_folder_only)
-        self.assertTrue('\\source really\\nested\\folder' in comparison.folders_in_source_folder_only)
-        self.assertTrue('\\unique_subfolder_source' in comparison.folders_in_source_folder_only)
+        self.assertTrue('source really' in comparison.folders_in_source_folder_only)
+        self.assertTrue('source really\\nested' in comparison.folders_in_source_folder_only)
+        self.assertTrue('source really\\nested\\folder' in comparison.folders_in_source_folder_only)
+        self.assertTrue('unique_subfolder_source' in comparison.folders_in_source_folder_only)
 
         self.assertEqual(4, len(comparison.folders_in_destination_folder_only))
-        self.assertTrue('\\destination really\\nested\\folder' in comparison.folders_in_destination_folder_only)
-        self.assertTrue('\\unique_subfolder_destination' in comparison.folders_in_destination_folder_only)
-        self.assertTrue('\\destination really' in comparison.folders_in_destination_folder_only)
-        self.assertTrue('\\destination really\\nested' in comparison.folders_in_destination_folder_only)
+        self.assertTrue('destination really\\nested\\folder' in comparison.folders_in_destination_folder_only)
+        self.assertTrue('unique_subfolder_destination' in comparison.folders_in_destination_folder_only)
+        self.assertTrue('destination really' in comparison.folders_in_destination_folder_only)
+        self.assertTrue('destination really\\nested' in comparison.folders_in_destination_folder_only)
 
     @unittest.skip('integration test')
     def test_compare_actual_folders(self):

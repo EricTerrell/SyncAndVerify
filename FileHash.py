@@ -44,27 +44,26 @@ class FileHash:
 
     @retry(wait=wait_fixed(Constants.RETRY_WAIT), stop=stop_after_attempt(Constants.MAX_RETRIES),
            before=before_callback, retry_error_callback=return_error_marker)
-    def create_file_hash(self, path, exclusions, root_path):
+    def create_file_hash(self, path):
         try:
-            if not FileHash._get_check_folder_path(path, root_path) in exclusions:
-                with open(path, 'rb') as file:
-                    hash_algorithm = FileHash._get_hash_algorithm()
-                    hash_algorithm_characters = hash_algorithm.digest_size * 2
+            with open(path, 'rb') as file:
+                hash_algorithm = FileHash._get_hash_algorithm()
+                hash_algorithm_characters = hash_algorithm.digest_size * 2
 
-                    while True:
-                        file_bytes = file.read(self.BLOCK_SIZE)
+                while True:
+                    file_bytes = file.read(self.BLOCK_SIZE)
 
-                        if len(file_bytes) == 0:
-                            result = hash_algorithm.hexdigest()
+                    if len(file_bytes) == 0:
+                        result = hash_algorithm.hexdigest()
 
-                            # Paranoia code
-                            if len(result) != hash_algorithm_characters or len(result) == 0 or \
-                                    len(result.strip()) != hash_algorithm_characters:
-                                raise AppException(f'Incorrect hash length: {len(result)} hash: "{result}" hash_algorithm_characters: {hash_algorithm_characters}')
+                        # Paranoia code
+                        if len(result) != hash_algorithm_characters or len(result) == 0 or \
+                                len(result.strip()) != hash_algorithm_characters:
+                            raise AppException(f'Incorrect hash length: {len(result)} hash: "{result}" hash_algorithm_characters: {hash_algorithm_characters}')
 
-                            return result
+                        return result
 
-                        hash_algorithm.update(file_bytes)
+                    hash_algorithm.update(file_bytes)
 
         except OSError as os_error:
             app_globals.log.print(

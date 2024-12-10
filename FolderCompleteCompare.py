@@ -24,6 +24,7 @@ from FileHash import FileHash, ERROR_MARKER
 from VerifyPaths import VerifyPaths
 from Globals import app_globals
 from AppException import AppException
+from FolderMetadata import FolderMetadata
 
 
 class FolderCompleteCompare:
@@ -34,22 +35,23 @@ class FolderCompleteCompare:
 
             executor = Executor.create(threads)
 
-            future_source = executor.submit(FolderCompleteCompare._create_file_hashes, source_path, exclusions)
-            future_destination = executor.submit(FolderCompleteCompare._create_file_hashes, destination_path,
-                                                 exclusions)
+            future_source_metadata = executor.submit(FolderMetadata, source_path, exclusions)
+            future_destination_metadata = executor.submit(FolderMetadata, destination_path, exclusions)
+
+            executor.shutdown(wait=True)
+
+            (source_metadata, destination_metadata) = \
+                future_source_metadata.result(), future_destination_metadata.result()
+
+            executor = Executor.create(threads)
+
+            future_source = executor.submit(FolderCompleteCompare._create_file_hashes, source_metadata, source_path)
+            future_destination = executor.submit(FolderCompleteCompare._create_file_hashes, destination_metadata,
+                                                 destination_path)
 
             executor.shutdown(wait=True)
 
             (source_hashes, destination_hashes) = future_source.result(), future_destination.result()
-
-            executor = Executor.create(threads)
-
-            future_source = executor.submit(FolderCompleteCompare._get_folders, source_path, exclusions)
-            future_destination = executor.submit(FolderCompleteCompare._get_folders, destination_path, exclusions)
-
-            executor.shutdown(wait=True)
-
-            (source_folders, destination_folders) = future_source.result(), future_destination.result()
 
             # in source only
             files_in_source_folder_only = source_hashes.keys() - destination_hashes.keys()
@@ -82,10 +84,10 @@ class FolderCompleteCompare:
             differences = len(files_in_source_folder_only) + len(files_in_destination_folder_only) + len(
                 could_not_read_files) + len(different_files)
 
-            folders_in_source_folder_only = source_folders - destination_folders
-            folders_in_destination_folder_only = destination_folders - source_folders
+            folders_in_source_folder_only = source_metadata.metadata[0] - destination_metadata.metadata[0]
+            folders_in_destination_folder_only = destination_metadata.metadata[0] - source_metadata.metadata[0]
 
-            folders_in_both_folders = source_folders.intersection(destination_folders)
+            folders_in_both_folders = source_metadata.metadata[0] & destination_metadata.metadata[0]
 
             CompleteComparison = namedtuple('CompleteComparison',
                                             ['folders_in_source_folder_only',
@@ -117,45 +119,20 @@ class FolderCompleteCompare:
             raise AppException(f'{exception}', exception)
 
     @staticmethod
-    def _create_file_hashes(root_path, exclusions):
+    def _create_file_hashes(metadata, root_path):
         file_hashes = {}
 
         root_path_string = f'{root_path}'
 
-        walk = os.walk(root_path, True, FolderCompleteCompare._error)
-
         file_hash = FileHash()
 
-        for dir_path, dir_names, file_names in walk:
-            check_folder = dir_path[len(root_path) + 1:]
-
-            if not check_folder in exclusions:
-                for file_name in file_names:
-                    file_full_path = os.path.join(dir_path, file_name)
-                    file_full_path_string = f'{file_full_path}'
-                    file_short_path = file_full_path_string[len(root_path_string):len(file_full_path_string)]
-                    file_hashes[file_short_path] = file_hash.create_file_hash(file_full_path, exclusions, root_path)
+        for filepath in metadata.metadata[1].keys():
+            file_full_path = os.path.join(root_path, filepath)
+            file_full_path_string = f'{file_full_path}'
+            file_short_path = file_full_path_string[len(root_path_string):len(file_full_path_string)]
+            file_hashes[file_short_path] = file_hash.create_file_hash(file_full_path)
 
         return file_hashes
-
-    @staticmethod
-    def _get_folders(root_path, exclusions):
-        folders = set()
-
-        walk = os.walk(root_path, True, FolderCompleteCompare._error)
-
-        for dir_path, dir_names, file_names in walk:
-            check_folder = dir_path[len(root_path) + 1:]
-
-            if (not check_folder in exclusions) and (dir_path != root_path):
-                abbreviated_path = dir_path[len(root_path):len(dir_path)]
-                folders.add(abbreviated_path)
-
-        return folders
-
-    @staticmethod
-    def _error(self, exception):
-        raise AppException(f'FolderCompleteCompare Error: root: "{self.root}" exception: {exception}', exception)
 
     @staticmethod
     def display_results(comparison):

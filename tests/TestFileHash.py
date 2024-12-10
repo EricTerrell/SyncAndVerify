@@ -32,7 +32,7 @@ class TestFileHash(BaseTest):
         file_path = 'folders/destination/file1.txt'
         full_file_path = os.path.join(root, file_path)
 
-        file_hash = FileHash().create_file_hash(full_file_path, TestFileHash._exclusions, '')
+        file_hash = FileHash().create_file_hash(full_file_path)
 
         hash_algorithm = hashlib.sha256()
         hash_algorithm.update(b'hello eric')

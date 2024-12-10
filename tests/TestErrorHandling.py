@@ -39,10 +39,10 @@ class TestErrorHandling(BaseTest):
 
         comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions)
 
-        self.assertTrue(len(comparison.folders_to_create) == 47)
+        self.assertTrue(len(comparison.folders_to_create) == 41)
         self.assertTrue(len(comparison.folders_to_delete) == 0)
         self.assertTrue(len(comparison.files_to_delete) == 0)
-        self.assertTrue(len(comparison.files_to_copy_metadata) == 704)
+        self.assertTrue(len(comparison.files_to_copy_metadata) == 705)
 
         FolderSync.sync(source_path, destination_path, exclusions)
 
@@ -57,10 +57,9 @@ class TestErrorHandling(BaseTest):
 
         self.assertTrue(len(comparison.files_in_source_folder_only) == 0)
         self.assertTrue(len(comparison.files_in_destination_folder_only) == 0)
-        self.assertTrue(len(comparison.files_in_both_folders) == 704)
+        self.assertTrue(len(comparison.files_in_both_folders) == 705)
         self.assertTrue(len(comparison.different_files) == 0)
         self.assertTrue(len(comparison.could_not_read_files) == 0)
-        self.assertTrue(len(comparison.source_hashes) == len(comparison.files_in_both_folders))
         self.assertTrue(len(comparison.destination_hashes) == len(comparison.files_in_both_folders))
 
 

@@ -39,7 +39,7 @@ class FolderMetadata:
                 folder = os.path.join(dir_path, dir_name)
                 folder = folder[len(self.root):len(folder)]
 
-                if not folder in self.exclusions:
+                if not FolderMetadata._folder_excluded(self, folder):
                     folders.append(folder)
 
         walk = os.walk(self.root, True, self._error)
@@ -50,15 +50,18 @@ class FolderMetadata:
             for file_name in file_names:
                 file_path = os.path.join(dir_path, file_name)
 
-                if not FolderMetadata._get_check_folder_path(dir_path, self.root) in self.exclusions:
+                if not FolderMetadata._folder_excluded(self, dir_path[len(self.root):]):
                     file_metadata = FileMetadata(self.root, file_path)
                     files[file_metadata.path] = file_metadata
 
         return set(folders), files
 
-    @staticmethod
-    def _get_check_folder_path(path, root_path):
-        return path[len(root_path):]
+    # Return true iff a folder is in the exclusions list, or if a folder in the exclusions list contains that folder
+    def _folder_excluded(self, folder):
+        matches = [exclusion for exclusion in self.exclusions
+                   if folder == exclusion or folder.startswith(exclusion + os.path.sep)]
+
+        return len(matches) > 0
 
     def _error(self, exception):
         raise AppException(f'FileMetadata Error: root: "{self.root}" exception: {exception}', exception)

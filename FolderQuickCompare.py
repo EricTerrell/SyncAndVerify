@@ -34,8 +34,8 @@ class FolderQuickCompare:
 
             executor = Executor.create(threads)
 
-            future_source_metadata = executor.submit(FolderQuickCompare.get_metadata, source_path, exclusions)
-            future_destination_metadata = executor.submit(FolderQuickCompare.get_metadata, destination_path, exclusions)
+            future_source_metadata = executor.submit(FolderMetadata, source_path, exclusions)
+            future_destination_metadata = executor.submit(FolderMetadata, destination_path, exclusions)
 
             executor.shutdown(wait=True)
 
@@ -87,10 +87,6 @@ class FolderQuickCompare:
             return result
         except (IOError, OSError, BaseException) as exception:
             raise AppException(f'{exception}', exception)
-
-    @staticmethod
-    def get_metadata(root, exclusions):
-        return FolderMetadata(root, exclusions)
 
     @staticmethod
     def display_results(comparison):
