@@ -32,6 +32,7 @@ class TestFileHash(BaseTest):
         file_path = 'folders/destination/file1.txt'
         full_file_path = os.path.join(root, file_path)
 
+
         file_hash = FileHash().create_file_hash(full_file_path)
 
         hash_algorithm = hashlib.sha256()
@@ -40,12 +41,13 @@ class TestFileHash(BaseTest):
 
         self.assertEqual(expected_result, file_hash)
 
-    @unittest.skip('integration test')
-    def test_hash_with_arbitrary_file(self):
-        full_file_path = 'C:\\Temp\\11.flac'
+    def test_hash_with_large_file(self):
+        root = self.get_temp_folder()
+        file_path = 'photo.jpg'
+        full_file_path = os.path.join(root, file_path)
 
         # From Linux sha256sum command
-        expected_hash = 'f1d7f41a0621e3a5c92fc68e98f235c63ed80be9690885df86cb2024770d46e0'
+        expected_hash = 'cf20ac3f8aa414fd74d1de103c9672a768b350f6a1f1415964d42f3330a7f88f'
 
         actual_hash = FileHash().create_file_hash(full_file_path)
 
