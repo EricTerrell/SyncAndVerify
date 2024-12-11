@@ -27,9 +27,8 @@ class FolderMetadata:
     def __init__(self, root, exclusions):
         self.root = FileSystemUtils.canonical_folder_path(root)
         self.exclusions = exclusions
-        self.metadata = self._get_metadata()
 
-    def _get_metadata(self):
+    def get_metadata(self):
         folders = []
 
         walk = os.walk(self.root, True, self._error)

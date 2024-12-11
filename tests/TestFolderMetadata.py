@@ -28,8 +28,10 @@ class TestFolderMetadata(BaseTest):
     def test_metadata_retrieval(self):
         folder_metadata = FolderMetadata(self.get_temp_folder(), TestFolderMetadata._exclusions)
 
-        folders = folder_metadata.metadata[0]
-        files = folder_metadata.metadata[1]
+        metadata = folder_metadata.get_metadata()
+
+        folders = metadata[0]
+        files = metadata[1]
 
         print(f'Root: {folder_metadata.root}')
         print(f'folder count: {len(folders)}')

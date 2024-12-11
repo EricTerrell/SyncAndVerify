@@ -35,8 +35,11 @@ class FolderCompleteCompare:
 
             executor = Executor.create(threads)
 
-            future_source_metadata = executor.submit(FolderMetadata, source_path, exclusions)
-            future_destination_metadata = executor.submit(FolderMetadata, destination_path, exclusions)
+            source_folder_metadata = FolderMetadata(source_path, exclusions)
+            destination_folder_metadata = FolderMetadata(destination_path, exclusions)
+
+            future_source_metadata = executor.submit(source_folder_metadata.get_metadata)
+            future_destination_metadata = executor.submit(destination_folder_metadata.get_metadata)
 
             executor.shutdown(wait=True)
 
@@ -84,10 +87,10 @@ class FolderCompleteCompare:
             differences = len(files_in_source_folder_only) + len(files_in_destination_folder_only) + len(
                 could_not_read_files) + len(different_files)
 
-            folders_in_source_folder_only = source_metadata.metadata[0] - destination_metadata.metadata[0]
-            folders_in_destination_folder_only = destination_metadata.metadata[0] - source_metadata.metadata[0]
+            folders_in_source_folder_only = source_metadata[0] - destination_metadata[0]
+            folders_in_destination_folder_only = destination_metadata[0] - source_metadata[0]
 
-            folders_in_both_folders = source_metadata.metadata[0] & destination_metadata.metadata[0]
+            folders_in_both_folders = source_metadata[0] & destination_metadata[0]
 
             CompleteComparison = namedtuple('CompleteComparison',
                                             ['folders_in_source_folder_only',
@@ -126,7 +129,7 @@ class FolderCompleteCompare:
 
         file_hash = FileHash()
 
-        for filepath in metadata.metadata[1].keys():
+        for filepath in metadata[1].keys():
             file_full_path = os.path.join(root_path, filepath)
             file_full_path_string = f'{file_full_path}'
             file_short_path = file_full_path_string[len(root_path_string):len(file_full_path_string)]

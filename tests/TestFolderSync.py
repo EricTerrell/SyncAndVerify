@@ -35,11 +35,14 @@ class TestFolderSync(BaseTest):
 
         FolderSync.sync(source_path, destination_path, TestFolderSync._exclusions)
 
-        source_metadata = FolderMetadata(source_path, TestFolderSync._exclusions)
-        destination_metadata = FolderMetadata(destination_path, TestFolderSync._exclusions)
+        source_folder_metadata = FolderMetadata(source_path, TestFolderSync._exclusions)
+        destination_folder_metadata = FolderMetadata(destination_path, TestFolderSync._exclusions)
 
-        self.assertEqual(len(source_metadata.metadata[0]), len(destination_metadata.metadata[0]))
-        self.assertEqual(len(source_metadata.metadata[1]), len(destination_metadata.metadata[1]))
+        source_metadata = source_folder_metadata.get_metadata()
+        destination_metadata = destination_folder_metadata.get_metadata()
+
+        self.assertEqual(len(source_metadata[0]), len(destination_metadata[0]))
+        self.assertEqual(len(source_metadata[1]), len(destination_metadata[1]))
 
     @unittest.skip('integration test')
     def test_sync_actual_folder(self):

@@ -34,8 +34,11 @@ class FolderQuickCompare:
 
             executor = Executor.create(threads)
 
-            future_source_metadata = executor.submit(FolderMetadata, source_path, exclusions)
-            future_destination_metadata = executor.submit(FolderMetadata, destination_path, exclusions)
+            source_folder_metadata = FolderMetadata(source_path, exclusions)
+            destination_folder_metadata = FolderMetadata(destination_path, exclusions)
+
+            future_source_metadata = executor.submit(source_folder_metadata.get_metadata)
+            future_destination_metadata = executor.submit(destination_folder_metadata.get_metadata)
 
             executor.shutdown(wait=True)
 
@@ -44,20 +47,20 @@ class FolderQuickCompare:
 
             folders_to_create = \
                 FolderQuickCompare._filter_redundant_folders_to_create(
-                    source_metadata.metadata[0] - destination_metadata.metadata[0])
+                    source_metadata[0] - destination_metadata[0])
 
             folders_to_delete = FolderQuickCompare._filter_redundant_folders_to_delete(
-                destination_metadata.metadata[0] - source_metadata.metadata[0])
+                destination_metadata[0] - source_metadata[0])
 
-            files_to_copy_new = source_metadata.metadata[1].keys() - destination_metadata.metadata[1].keys()
+            files_to_copy_new = source_metadata[1].keys() - destination_metadata[1].keys()
 
-            common_file_keys = source_metadata.metadata[1].keys() & destination_metadata.metadata[1].keys()
+            common_file_keys = source_metadata[1].keys() & destination_metadata[1].keys()
 
             files_to_copy_changed = set()
 
             for common_file_key in common_file_keys:
-                source_file_metadata = source_metadata.metadata[1][common_file_key]
-                destination_file_metadata = destination_metadata.metadata[1][common_file_key]
+                source_file_metadata = source_metadata[1][common_file_key]
+                destination_file_metadata = destination_metadata[1][common_file_key]
 
                 if not source_file_metadata.files_are_same(destination_file_metadata):
                     files_to_copy_changed.add(common_file_key)
@@ -67,11 +70,11 @@ class FolderQuickCompare:
             files_to_copy_metadata = {}
 
             for file in files_to_copy:
-                files_to_copy_metadata[file] = source_metadata.metadata[1][file]
+                files_to_copy_metadata[file] = source_metadata[1][file]
 
             # Don't delete files that are inside folders that will be deleted.
             files_to_delete = (set(filter(lambda file: not FolderQuickCompare._file_in_folders(file, folders_to_delete),
-                                          destination_metadata.metadata[1].keys() - source_metadata.metadata[1].keys()
+                                          destination_metadata[1].keys() - source_metadata[1].keys()
                                           )))
 
             differences = len(folders_to_delete) + len(folders_to_create) + len(files_to_delete) + len(files_to_copy)
