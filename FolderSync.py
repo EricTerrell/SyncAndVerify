@@ -20,7 +20,8 @@
 import os
 import stat
 import shutil
-import concurrent.futures
+import time
+from datetime import timedelta
 from tenacity import RetryError
 from FileSystemUtils import FileSystemUtils
 from FolderQuickCompare import FolderQuickCompare
@@ -29,28 +30,34 @@ from StringLiterals import StringLiterals
 from Globals import app_globals
 from AppException import AppException
 from FileHash import FileHash
+from DateTimeUtils import DateTimeUtils
+from Executor import Executor
 
 
 class FolderSync:
     @staticmethod
-    def sync(source_path, destination_path, exclusions, threads=1):
+    def sync(source_path, destination_path, exclusions, workers=1):
+        start_time = time.perf_counter()
+
         source_path, destination_path = VerifyPaths.verify(source_path, destination_path)
 
         try:
             if not os.path.exists(destination_path):
                 os.makedirs(destination_path)
 
-            comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, threads)
+            comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, workers)
             app_globals.log.print(f'\t{FolderQuickCompare.summary(comparison)}')
 
             if comparison.differences > 0:
                 FolderSync._delete_folders(comparison, destination_path)
                 FolderSync._delete_files(comparison, destination_path)
                 FolderSync._create_folders(comparison, destination_path)
-                FolderSync._copy_files(comparison, source_path, destination_path, threads)
+                FolderSync._copy_files(comparison, source_path, destination_path)
+
+                FolderSync._verify_copied_files(comparison, source_path, destination_path, workers)
 
                 # After backup is complete, re-run quick comparison to verify that everything was completed.
-                post_sync_comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, threads)
+                post_sync_comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, workers)
 
                 app_globals.log.print('\tSynced')
                 app_globals.log.print(f'\tChecking Sync: {FolderQuickCompare.summary(post_sync_comparison)}')
@@ -65,6 +72,10 @@ class FolderSync:
 
         except (RetryError, IOError, OSError, BaseException) as exception:
             raise AppException(f'{exception}', exception)
+
+        finally:
+            app_globals.log.print(
+                f'Elapsed Time: {timedelta(seconds=time.perf_counter() - start_time)}\n')
 
         return comparison
 
@@ -100,58 +111,104 @@ class FolderSync:
             os.makedirs(full_path, exist_ok=False)
 
     @staticmethod
-    def _copy_files(comparison, source_path, destination_path, threads):
+    def _copy_files(comparison, source_path, destination_path):
+        start_time = time.perf_counter()
+
         files_copied = 0
         bytes_copied = 0
         bytes_to_copy = sum(value.metadata.st_size for value in comparison.files_to_copy_metadata.values())
 
-        with concurrent.futures.ThreadPoolExecutor(threads) as executor:
-            try:
-                for file in comparison.files_to_copy:
-                    file_source_path = os.path.join(source_path, file)
-                    file_destination_path = os.path.join(destination_path, file)
+        app_globals.log.print(f'\tCopying files ({len(comparison.files_to_copy):,})')
 
-                    app_globals.log.print(f'\t{file_destination_path}', standard_output=False)
+        for file in comparison.files_to_copy:
+            file_source_path = os.path.join(source_path, file)
+            file_destination_path = os.path.join(destination_path, file)
 
-                    FileSystemUtils.copy_file(file_source_path, file_destination_path)
+            app_globals.log.print(f'\t{file_destination_path}', standard_output=False)
 
-                    FolderSync._verify_copy(file_source_path, file_destination_path, executor)
+            FileSystemUtils.copy_file(file_source_path, file_destination_path)
 
-                    files_copied += 1
-                    bytes_copied += comparison.files_to_copy_metadata[file].metadata.st_size
+            files_copied += 1
+            bytes_copied += comparison.files_to_copy_metadata[file].metadata.st_size
 
-                    if bytes_to_copy != 0:
-                        bytes_percent = (bytes_copied * 100) / bytes_to_copy
-                    else:
-                        bytes_percent = 100.0
+            if bytes_to_copy != 0:
+                bytes_percent = (bytes_copied * 100) / bytes_to_copy
+            else:
+                bytes_percent = 100.0
 
-                    app_globals.log.print('\t\tFiles: ({:,}/{:,} {:.2f}%) Bytes: ({:,}/{:,} {:.2f}%)'.format(
-                        files_copied,
-                        len(comparison.files_to_copy_metadata),
-                        (files_copied * 100) / len(comparison.files_to_copy_metadata),
-                        bytes_copied,
-                        bytes_to_copy,
-                        bytes_percent
-                    ), standard_output=False)
-            finally:
-                executor.shutdown()
+            app_globals.log.print('\t\tFiles: ({:,}/{:,} {:.2f}%) Bytes: ({:,}/{:,} {:.2f}%)'.format(
+                files_copied,
+                len(comparison.files_to_copy_metadata),
+                (files_copied * 100) / len(comparison.files_to_copy_metadata),
+                bytes_copied,
+                bytes_to_copy,
+                bytes_percent
+            ), standard_output=False)
+
+        app_globals.log.print(
+            f'\t\tElapsed Time: {timedelta(seconds=time.perf_counter() - start_time)}')
 
     @staticmethod
-    def _verify_copy(file_source_path, file_destination_path, executor):
-        future_file_source_hash      = executor.submit(FileHash().create_file_hash, file_source_path)
-        future_file_destination_hash = executor.submit(FileHash().create_file_hash, file_destination_path)
+    def _verify_copied_files(comparison, source_path, destination_path, workers):
+        start_time = time.perf_counter()
 
-        file_source_hash      = future_file_source_hash.result()
-        file_destination_hash = future_file_destination_hash.result()
+        app_globals.log.print(
+            f'\tVerifying copied files ({len(comparison.files_to_copy):,}) workers: {workers}')
 
-        if file_source_hash == FileHash.ERROR_MARKER:
-            error_message = f'Cannot compute hash for source file "{file_source_path}"'
-            raise AppException(error_message)
+        executor = Executor.create(workers)
 
-        if file_destination_hash == FileHash.ERROR_MARKER:
-            error_message = f'Cannot compute hash for destination file "{file_destination_path}"'
-            raise AppException(error_message)
+        future_source_file_digests      = executor.submit(FolderSync._compute_file_digests, source_path,
+                                                          comparison.files_to_copy)
+        future_destination_file_digests = executor.submit(FolderSync._compute_file_digests, destination_path,
+                                                          comparison.files_to_copy)
 
-        if file_destination_hash != file_source_hash:
-            error_message = f'File "{file_source_path}" hash: "{file_source_hash}" and file "{file_destination_path}" hash: "{file_destination_hash}" hashes do not match'
-            raise AppException(error_message)
+        executor.shutdown(wait=True)
+
+        source_file_digests      = future_source_file_digests.result()
+        destination_file_digests = future_destination_file_digests.result()
+
+        errors = 0
+
+        for file in comparison.files_to_copy:
+            source_file_digest      = source_file_digests[file]
+            destination_file_digest = destination_file_digests[file]
+
+            file_source_path = os.path.join(source_path, file)
+            file_destination_path = os.path.join(destination_path, file)
+
+            if source_file_digest == FileHash.ERROR_MARKER:
+                errors += 1
+                error_message = f'Could not compute hash for source file {file_source_path}'
+                app_globals.log.print(error_message)
+
+            if destination_file_digest == FileHash.ERROR_MARKER:
+                errors += 1
+                error_message = f'\tCould not compute hash for destination file {file_destination_path}'
+                app_globals.log.print(error_message)
+
+            if destination_file_digest != source_file_digest:
+                errors += 1
+                error_message = f'\t*****Hash for "{file_source_path}" ({source_file_digest}) does not match hash for "{file_destination_path}" ({destination_file_digest}) *****'
+                app_globals.log.print(error_message)
+
+        try:
+            if errors > 0:
+                error_message = f'\t*****UNSUCCESSFUL VERIFICATION OF COPIED FILES *****'
+                raise AppException(error_message)
+            elif errors == 0:
+                app_globals.log.print(f'\tSuccessfully verified copied files')
+        finally:
+            app_globals.log.print(
+                f'\t\tElapsed Time: {timedelta(seconds=time.perf_counter() - start_time)}')
+
+
+    @staticmethod
+    def _compute_file_digests(path, files_to_copy):
+        digests = dict()
+
+        for file in files_to_copy:
+            file_path = os.path.join(path, file)
+            digest = FileHash().create_file_hash(file_path)
+            digests[file] = digest
+
+        return digests

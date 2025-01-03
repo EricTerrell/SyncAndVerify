@@ -99,7 +99,7 @@ def main():
             sys.exit(Constants.EXIT_FAILURE)
 
         finally:
-            app_globals.log.print(f'\nElapsed Time: {DateTimeUtils.format_timedelta(timedelta(seconds=time.perf_counter() - start_time))}')
+            app_globals.log.print(f'\nElapsed Time: {timedelta(seconds=time.perf_counter() - start_time)}')
             app_globals.log.print(f'\nFinished at {DateTimeUtils.format_date_time()}\n')
 
             PowerManagement.allow_sleep()

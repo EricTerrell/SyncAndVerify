@@ -24,7 +24,3 @@ class DateTimeUtils:
     @staticmethod
     def format_date_time():
         return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    @staticmethod
-    def format_timedelta(timedelta):
-        return str(timedelta)[0:-7]
