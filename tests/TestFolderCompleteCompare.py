@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2024, Eric Bergman-Terrell
+  (C) Copyright 2025, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -33,7 +33,7 @@ class TestFolderCompleteCompare(BaseTest):
         source_path = pathlib.Path(self.get_temp_folder(), 'folders/source')
         destination_path = pathlib.Path(self.get_temp_folder(), 'folders/destination')
 
-        comparison = FolderCompleteCompare.compare(source_path, destination_path, TestFolderCompleteCompare._exclusions)
+        comparison = FolderCompleteCompare.compare(source_path, destination_path, TestFolderCompleteCompare._exclusions, 2)
 
         FolderCompleteCompare.display_results(comparison)
 
@@ -76,7 +76,7 @@ class TestFolderCompleteCompare(BaseTest):
 
             print(f'\nComparing "{pair[0]}" and "{pair[1]}"\n')
 
-            comparison = FolderCompleteCompare.compare(pair[0], pair[1], TestFolderCompleteCompare._exclusions)
+            comparison = FolderCompleteCompare.compare(pair[0], pair[1], TestFolderCompleteCompare._exclusions, 2)
 
             FolderCompleteCompare.display_results(comparison)
 
@@ -96,6 +96,20 @@ class TestFolderCompleteCompare(BaseTest):
     @unittest.skip('just determine available hash algorithms')
     def test_enumerate_hash_algorithms(self):
         print(hashlib.algorithms_guaranteed)
+
+    @unittest.skip('used to determine optimal buffer size (Config.FILE_BLOCK_SIZE)')
+    def test_buffer_size(self):
+        source_root = 'Z:\\Media\\DVDs\\Eric\'s DVDs\\Music\\Opera\\Parsifal'
+        dest_root = 'D:\\Media\\DVDs\\Eric\'s DVDs\\Music\\Opera\\Parsifal'
+
+        start_time = time.perf_counter()
+
+        comparison = FolderCompleteCompare.compare(source_root, dest_root, TestFolderCompleteCompare._exclusions,
+                                                   2)
+
+        FolderCompleteCompare.display_results(comparison)
+
+        print(f'Elapsed Time: {timedelta(seconds=time.perf_counter() - start_time)}')
 
 
 if __name__ == '__main__':

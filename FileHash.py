@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2024, Eric Bergman-Terrell
+  (C) Copyright 2025, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -20,27 +20,23 @@
 import hashlib
 import os
 from tenacity import *
-from Globals import app_globals
 from Constants import Constants
 from AppException import AppException
-
+from Config import Config
 
 def before_callback(retry_state):
     if retry_state.attempt_number > 1:
-        app_globals.log.print(f'***** FileHash.create_file_hash: attempt_number: {retry_state.attempt_number} file path: {retry_state.args[1]}')
-
-
-ERROR_MARKER = '<<ERROR>>'
+        print(f'***** FileHash.create_file_hash: attempt_number: {retry_state.attempt_number} file path: {retry_state.args[1]}')
 
 
 def return_error_marker(retry_state):
-    app_globals.log.print(
+    print(
         f'***** FileHash.create_file_hash: failing after retries. attempt_number: {retry_state.attempt_number} File path: {retry_state.args[1]}')
-    return ERROR_MARKER
+    return FileHash.ERROR_MARKER
 
 
 class FileHash:
-    BLOCK_SIZE = 65536
+    ERROR_MARKER = '<<ERROR>>'
 
     @retry(wait=wait_fixed(Constants.RETRY_WAIT), stop=stop_after_attempt(Constants.MAX_RETRIES),
            before=before_callback, retry_error_callback=return_error_marker)
@@ -51,7 +47,7 @@ class FileHash:
                 hash_algorithm_characters = hash_algorithm.digest_size * 2
 
                 while True:
-                    file_bytes = file.read(self.BLOCK_SIZE)
+                    file_bytes = file.read(Config.FILE_BLOCK_SIZE)
 
                     if len(file_bytes) == 0:
                         result = hash_algorithm.hexdigest()
@@ -62,13 +58,13 @@ class FileHash:
                             raise AppException(f'Incorrect hash length: {len(result)} hash: "{result}" hash_algorithm_characters: {hash_algorithm_characters}')
 
                         return result
-
-                    hash_algorithm.update(file_bytes)
+                    else:
+                        hash_algorithm.update(file_bytes)
 
         except OSError as os_error:
-            app_globals.log.print(
+            print(
                 f'***** FileHash.create_file_hash OSError cannot read file: {path} error: {os_error} *****')
-            app_globals.log.print(f'\terrorno: {os_error.errno} winerror: {os_error.winerror} strerror: {os_error.strerror} filename: {os_error.filename}')
+            print(f'\terrorno: {os_error.errno} winerror: {os_error.winerror} strerror: {os_error.strerror} filename: {os_error.filename}')
 
             raise
 

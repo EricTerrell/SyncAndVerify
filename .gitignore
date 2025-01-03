@@ -130,4 +130,5 @@ dmypy.json
 
 # Custom
 CustomBackup.py
+LocalConfig.py
 

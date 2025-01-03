@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2024, Eric Bergman-Terrell
+  (C) Copyright 2025, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -20,7 +20,7 @@
 import os
 from Executor import Executor
 from collections import namedtuple
-from FileHash import FileHash, ERROR_MARKER
+from FileHash import FileHash
 from VerifyPaths import VerifyPaths
 from Globals import app_globals
 from AppException import AppException
@@ -29,11 +29,11 @@ from FolderMetadata import FolderMetadata
 
 class FolderCompleteCompare:
     @staticmethod
-    def compare(source_path, destination_path, exclusions, threads=1):
+    def compare(source_path, destination_path, exclusions, processes=1):
         try:
             source_path, destination_path = VerifyPaths.verify(source_path, destination_path, True)
 
-            executor = Executor.create(threads)
+            executor = Executor.create(processes)
 
             source_folder_metadata = FolderMetadata(source_path, exclusions)
             destination_folder_metadata = FolderMetadata(destination_path, exclusions)
@@ -46,7 +46,7 @@ class FolderCompleteCompare:
             (source_metadata, destination_metadata) = \
                 future_source_metadata.result(), future_destination_metadata.result()
 
-            executor = Executor.create(threads)
+            executor = Executor.create(processes)
 
             future_source = executor.submit(FolderCompleteCompare._create_file_hashes, source_metadata, source_path)
             future_destination = executor.submit(FolderCompleteCompare._create_file_hashes, destination_metadata,
@@ -76,7 +76,7 @@ class FolderCompleteCompare:
                 source_hash = source_hashes[file]
                 destination_hash = destination_hashes[file]
 
-                if source_hash == ERROR_MARKER or destination_hash == ERROR_MARKER:
+                if source_hash == FileHash.ERROR_MARKER or destination_hash == FileHash.ERROR_MARKER:
                     could_not_read_files.add(file)
                 else:
                     if source_hash != destination_hash:

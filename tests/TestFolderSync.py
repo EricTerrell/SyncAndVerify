@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2024, Eric Bergman-Terrell
+  (C) Copyright 2025, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -33,7 +33,7 @@ class TestFolderSync(BaseTest):
         source_path = pathlib.Path(self.get_temp_folder(), 'folders/source')
         destination_path = pathlib.Path(self.get_temp_folder(), 'folders/destination')
 
-        FolderSync.sync(source_path, destination_path, TestFolderSync._exclusions)
+        FolderSync.sync(source_path, destination_path, TestFolderSync._exclusions, 2)
 
         source_folder_metadata = FolderMetadata(source_path, TestFolderSync._exclusions)
         destination_folder_metadata = FolderMetadata(destination_path, TestFolderSync._exclusions)

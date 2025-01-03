@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2024, Eric Bergman-Terrell
+  (C) Copyright 2025, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -31,7 +31,6 @@ class TestFileHash(BaseTest):
         root = self.get_temp_folder()
         file_path = 'folders/destination/file1.txt'
         full_file_path = os.path.join(root, file_path)
-
 
         file_hash = FileHash().create_file_hash(full_file_path)
 

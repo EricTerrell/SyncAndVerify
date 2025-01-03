@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2024, Eric Bergman-Terrell
+  (C) Copyright 2025, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -20,6 +20,7 @@
 import os
 import stat
 import shutil
+import concurrent.futures
 from tenacity import RetryError
 from FileSystemUtils import FileSystemUtils
 from FolderQuickCompare import FolderQuickCompare
@@ -27,6 +28,7 @@ from VerifyPaths import VerifyPaths
 from StringLiterals import StringLiterals
 from Globals import app_globals
 from AppException import AppException
+from FileHash import FileHash
 
 
 class FolderSync:
@@ -45,7 +47,7 @@ class FolderSync:
                 FolderSync._delete_folders(comparison, destination_path)
                 FolderSync._delete_files(comparison, destination_path)
                 FolderSync._create_folders(comparison, destination_path)
-                FolderSync._copy_files(comparison, source_path, destination_path)
+                FolderSync._copy_files(comparison, source_path, destination_path, threads)
 
                 # After backup is complete, re-run quick comparison to verify that everything was completed.
                 post_sync_comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, threads)
@@ -98,32 +100,58 @@ class FolderSync:
             os.makedirs(full_path, exist_ok=False)
 
     @staticmethod
-    def _copy_files(comparison, source_path, destination_path):
+    def _copy_files(comparison, source_path, destination_path, threads):
         files_copied = 0
         bytes_copied = 0
         bytes_to_copy = sum(value.metadata.st_size for value in comparison.files_to_copy_metadata.values())
 
-        for file in comparison.files_to_copy:
-            file_source_path = os.path.join(source_path, file)
-            file_destination_path = os.path.join(destination_path, file)
+        with concurrent.futures.ThreadPoolExecutor(threads) as executor:
+            try:
+                for file in comparison.files_to_copy:
+                    file_source_path = os.path.join(source_path, file)
+                    file_destination_path = os.path.join(destination_path, file)
 
-            app_globals.log.print(f'\t{file_destination_path}', standard_output=False)
+                    app_globals.log.print(f'\t{file_destination_path}', standard_output=False)
 
-            FileSystemUtils.copy_file(file_source_path, file_destination_path)
+                    FileSystemUtils.copy_file(file_source_path, file_destination_path)
 
-            files_copied += 1
-            bytes_copied += comparison.files_to_copy_metadata[file].metadata.st_size
+                    FolderSync._verify_copy(file_source_path, file_destination_path, executor)
 
-            if bytes_to_copy != 0:
-                bytes_percent = (bytes_copied * 100) / bytes_to_copy
-            else:
-                bytes_percent = 100.0
+                    files_copied += 1
+                    bytes_copied += comparison.files_to_copy_metadata[file].metadata.st_size
 
-            app_globals.log.print('\t\tFiles: ({:,}/{:,} {:.2f}%) Bytes: ({:,}/{:,} {:.2f}%)'.format(
-                files_copied,
-                len(comparison.files_to_copy_metadata),
-                (files_copied * 100) / len(comparison.files_to_copy_metadata),
-                bytes_copied,
-                bytes_to_copy,
-                bytes_percent
-            ), standard_output=False)
+                    if bytes_to_copy != 0:
+                        bytes_percent = (bytes_copied * 100) / bytes_to_copy
+                    else:
+                        bytes_percent = 100.0
+
+                    app_globals.log.print('\t\tFiles: ({:,}/{:,} {:.2f}%) Bytes: ({:,}/{:,} {:.2f}%)'.format(
+                        files_copied,
+                        len(comparison.files_to_copy_metadata),
+                        (files_copied * 100) / len(comparison.files_to_copy_metadata),
+                        bytes_copied,
+                        bytes_to_copy,
+                        bytes_percent
+                    ), standard_output=False)
+            finally:
+                executor.shutdown()
+
+    @staticmethod
+    def _verify_copy(file_source_path, file_destination_path, executor):
+        future_file_source_hash      = executor.submit(FileHash().create_file_hash, file_source_path)
+        future_file_destination_hash = executor.submit(FileHash().create_file_hash, file_destination_path)
+
+        file_source_hash      = future_file_source_hash.result()
+        file_destination_hash = future_file_destination_hash.result()
+
+        if file_source_hash == FileHash.ERROR_MARKER:
+            error_message = f'Cannot compute hash for source file "{file_source_path}"'
+            raise AppException(error_message)
+
+        if file_destination_hash == FileHash.ERROR_MARKER:
+            error_message = f'Cannot compute hash for destination file "{file_destination_path}"'
+            raise AppException(error_message)
+
+        if file_destination_hash != file_source_hash:
+            error_message = f'File "{file_source_path}" hash: "{file_source_hash}" and file "{file_destination_path}" hash: "{file_destination_hash}" hashes do not match'
+            raise AppException(error_message)

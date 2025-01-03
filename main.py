@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2024, Eric Bergman-Terrell
+  (C) Copyright 2025, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -25,18 +25,18 @@ import traceback
 from FolderQuickCompare import FolderQuickCompare
 from FolderCompleteCompare import FolderCompleteCompare
 from FolderSync import FolderSync
-from PowerManagement import PowerManagement
 from Log import Log
 from Globals import app_globals
 from AppException import AppException
 from StringLiterals import StringLiterals
 from Constants import Constants
+from PowerManagement import PowerManagement
 from DateTimeUtils import DateTimeUtils
 from datetime import timedelta
 
 
 def print_usage_and_exit():
-    app_globals.log.print('usage: {s (sync)|qc (quick compare)|cc (complete compare)} {source folder} {destination folder} {log root folder} {# threads}')
+    app_globals.log.print('usage: {s (sync)|qc (quick compare)|cc (complete compare)} {source folder} {destination folder} {log root folder} {# processes or threads (1 or 2)}')
     sys.exit(Constants.EXIT_FAILURE)
 
 
@@ -54,11 +54,11 @@ def main():
         source_path = sys.argv[2]
         destination_path = sys.argv[3]
         log_root = sys.argv[4]
-        threads = int(sys.argv[5])
+        workers = int(sys.argv[5])
         exclusions = []
 
-        if threads < 1:
-            raise AppException('# threads must be >= 1')
+        if workers < 1 or workers > 2:
+            raise AppException('# workers must be 1 or 2')
 
         app_globals.log.print(f"\nStarting at {DateTimeUtils.format_date_time()} {sys.version}\n")
 
@@ -71,19 +71,19 @@ def main():
             app_globals.log.print(StringLiterals.EMPTY_STRING)
 
             if verb == 'QC':
-                app_globals.log.print(f'Comparing (quick) "{source_path}" and "{destination_path}" exclusions: "{exclusions}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Comparing (quick) "{source_path}" and "{destination_path}" exclusions: "{exclusions}" ({workers} workers) ({DateTimeUtils.format_date_time()})')
 
-                comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, threads)
+                comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, workers)
                 FolderQuickCompare.display_results(comparison)
             elif verb == 'CC':
-                app_globals.log.print(f'Comparing (complete) "{source_path}" and "{destination_path}" exclusions: "{exclusions}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Comparing (complete) "{source_path}" and "{destination_path}" exclusions: "{exclusions}" ({workers} workers) ({DateTimeUtils.format_date_time()})')
 
-                comparison = FolderCompleteCompare.compare(source_path, destination_path, exclusions, threads)
+                comparison = FolderCompleteCompare.compare(source_path, destination_path, exclusions, workers)
                 FolderCompleteCompare.display_results(comparison)
             elif verb == 'S':
-                app_globals.log.print(f'Syncing "{source_path}" to "{destination_path}" exclusions: "{exclusions}" ({threads} threads) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Syncing "{source_path}" to "{destination_path}" exclusions: "{exclusions}" ({workers} workers) ({DateTimeUtils.format_date_time()})')
 
-                FolderSync.sync(source_path, destination_path, exclusions, threads)
+                FolderSync.sync(source_path, destination_path, exclusions, workers)
 
         except (AppException, OSError, KeyboardInterrupt, BaseException, ZeroDivisionError) as exception:
             if isinstance(exception, KeyboardInterrupt):
