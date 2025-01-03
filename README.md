@@ -8,7 +8,7 @@ SyncAndVerify
 One can specify a list of folders to ignore when doing a sync or comparison. This exclusion mechanism is currently only available via the programmatic interface, not from the command line.
 # Copyright
 
-SyncAndVerify &#169; Copyright 2024, [`Eric Bergman-Terrell`](https://www.ericbt.com)
+SyncAndVerify &#169; Copyright 2025, [`Eric Bergman-Terrell`](https://www.ericbt.com)
 
 # Links
 
