@@ -28,7 +28,7 @@ from AppException import AppException
 
 class FolderQuickCompare:
     @staticmethod
-    def compare(source_path, destination_path, exclusions, processes=1):
+    def compare(source_path, destination_path, exclusions, processes = 1):
         try:
             source_path, destination_path = VerifyPaths.verify(source_path, destination_path, True)
 

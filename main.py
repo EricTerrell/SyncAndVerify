@@ -54,11 +54,11 @@ def main():
         source_path = sys.argv[2]
         destination_path = sys.argv[3]
         log_root = sys.argv[4]
-        workers = int(sys.argv[5])
+        processes = int(sys.argv[5])
         exclusions = []
 
-        if workers < 1 or workers > 2:
-            raise AppException('# workers must be 1 or 2')
+        if processes < 1 or processes > 2:
+            raise AppException('# processes must be 1 or 2')
 
         app_globals.log.print(f"\nStarting at {DateTimeUtils.format_date_time()} {sys.version}\n")
 
@@ -71,19 +71,19 @@ def main():
             app_globals.log.print(StringLiterals.EMPTY_STRING)
 
             if verb == 'QC':
-                app_globals.log.print(f'Comparing (quick) "{source_path}" and "{destination_path}" exclusions: "{exclusions}" ({workers} workers) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Comparing (quick) "{source_path}" and "{destination_path}" exclusions: "{exclusions}" ({processes} processes) ({DateTimeUtils.format_date_time()})')
 
-                comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, workers)
+                comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, processes)
                 FolderQuickCompare.display_results(comparison)
             elif verb == 'CC':
-                app_globals.log.print(f'Comparing (complete) "{source_path}" and "{destination_path}" exclusions: "{exclusions}" ({workers} workers) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Comparing (complete) "{source_path}" and "{destination_path}" exclusions: "{exclusions}" ({processes} processes) ({DateTimeUtils.format_date_time()})')
 
-                comparison = FolderCompleteCompare.compare(source_path, destination_path, exclusions, workers)
+                comparison = FolderCompleteCompare.compare(source_path, destination_path, exclusions, processes)
                 FolderCompleteCompare.display_results(comparison)
             elif verb == 'S':
-                app_globals.log.print(f'Syncing "{source_path}" to "{destination_path}" exclusions: "{exclusions}" ({workers} workers) ({DateTimeUtils.format_date_time()})')
+                app_globals.log.print(f'Syncing "{source_path}" to "{destination_path}" exclusions: "{exclusions}" ({processes} processes) ({DateTimeUtils.format_date_time()})')
 
-                FolderSync.sync(source_path, destination_path, exclusions, workers)
+                FolderSync.sync(source_path, destination_path, exclusions, processes)
 
         except (AppException, OSError, KeyboardInterrupt, BaseException, ZeroDivisionError) as exception:
             if isinstance(exception, KeyboardInterrupt):

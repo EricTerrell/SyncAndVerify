@@ -30,13 +30,12 @@ from StringLiterals import StringLiterals
 from Globals import app_globals
 from AppException import AppException
 from FileHash import FileHash
-from DateTimeUtils import DateTimeUtils
 from Executor import Executor
 
 
 class FolderSync:
     @staticmethod
-    def sync(source_path, destination_path, exclusions, workers=1):
+    def sync(source_path, destination_path, exclusions, processes = 1):
         start_time = time.perf_counter()
 
         source_path, destination_path = VerifyPaths.verify(source_path, destination_path)
@@ -45,7 +44,7 @@ class FolderSync:
             if not os.path.exists(destination_path):
                 os.makedirs(destination_path)
 
-            comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, workers)
+            comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, processes)
             app_globals.log.print(f'\t{FolderQuickCompare.summary(comparison)}')
 
             if comparison.differences > 0:
@@ -54,10 +53,10 @@ class FolderSync:
                 FolderSync._create_folders(comparison, destination_path)
                 FolderSync._copy_files(comparison, source_path, destination_path)
 
-                FolderSync._verify_copied_files(comparison, source_path, destination_path, workers)
+                FolderSync._verify_copied_files(comparison, source_path, destination_path, processes)
 
                 # After backup is complete, re-run quick comparison to verify that everything was completed.
-                post_sync_comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, workers)
+                post_sync_comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions, processes)
 
                 app_globals.log.print('\tSynced')
                 app_globals.log.print(f'\tChecking Sync: {FolderQuickCompare.summary(post_sync_comparison)}')
@@ -118,7 +117,7 @@ class FolderSync:
         bytes_copied = 0
         bytes_to_copy = sum(value.metadata.st_size for value in comparison.files_to_copy_metadata.values())
 
-        app_globals.log.print(f'\tCopying files ({len(comparison.files_to_copy):,})')
+        app_globals.log.print(f'\tCopying files')
 
         for file in comparison.files_to_copy:
             file_source_path = os.path.join(source_path, file)
@@ -149,13 +148,13 @@ class FolderSync:
             f'\t\tElapsed Time: {timedelta(seconds=time.perf_counter() - start_time)}')
 
     @staticmethod
-    def _verify_copied_files(comparison, source_path, destination_path, workers):
+    def _verify_copied_files(comparison, source_path, destination_path, processes):
         start_time = time.perf_counter()
 
         app_globals.log.print(
-            f'\tVerifying copied files ({len(comparison.files_to_copy):,}) workers: {workers}')
+            f'\tVerifying copied files')
 
-        executor = Executor.create(workers)
+        executor = Executor.create(processes)
 
         future_source_file_digests      = executor.submit(FolderSync._compute_file_digests, source_path,
                                                           comparison.files_to_copy)
