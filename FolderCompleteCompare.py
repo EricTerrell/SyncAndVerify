@@ -29,7 +29,7 @@ from FolderMetadata import FolderMetadata
 
 class FolderCompleteCompare:
     @staticmethod
-    def compare(source_path, destination_path, exclusions, processes = 1):
+    def compare(source_path, destination_path, exclusions, processes):
         try:
             source_path, destination_path = VerifyPaths.verify(source_path, destination_path, True)
 
@@ -73,7 +73,7 @@ class FolderCompleteCompare:
             could_not_read_files = set()
 
             for file in files_in_both_folders:
-                source_hash = source_hashes[file]
+                source_hash      = source_hashes[file]
                 destination_hash = destination_hashes[file]
 
                 if source_hash == FileHash.ERROR_MARKER or destination_hash == FileHash.ERROR_MARKER:
@@ -163,7 +163,7 @@ class FolderCompleteCompare:
                 len(comparison.different_files) > 0 or len(comparison.could_not_read_files) > 0:
             # in both source and destination
             app_globals.log.print(
-                f'\n\tFiles in Source and Destination Folders: {len(comparison.files_in_both_folders):,} Identical: {len(comparison.identical_files):,} Different: {len(comparison.different_files):,} Read Errors: {len(comparison.could_not_read_files):,}')
+                f'\tFiles in Source and Destination Folders: {len(comparison.files_in_both_folders):,} Identical: {len(comparison.identical_files):,} Different: {len(comparison.different_files):,} Read Errors: {len(comparison.could_not_read_files):,}')
 
         for file in comparison.different_files:
             source_hash = comparison.source_hashes[file]

@@ -31,6 +31,7 @@ from Globals import app_globals
 from AppException import AppException
 from FileHash import FileHash
 from Executor import Executor
+from DateTimeUtils import DateTimeUtils
 
 
 class FolderSync:
@@ -117,7 +118,7 @@ class FolderSync:
         bytes_copied = 0
         bytes_to_copy = sum(value.metadata.st_size for value in comparison.files_to_copy_metadata.values())
 
-        app_globals.log.print(f'\tCopying files')
+        app_globals.log.print(f'\tCopying files ({DateTimeUtils.format_date_time()})')
 
         for file in comparison.files_to_copy:
             file_source_path = os.path.join(source_path, file)
@@ -151,8 +152,7 @@ class FolderSync:
     def _verify_copied_files(comparison, source_path, destination_path, processes):
         start_time = time.perf_counter()
 
-        app_globals.log.print(
-            f'\tVerifying copied files')
+        app_globals.log.print(f'\tVerifying copied files ({processes} processes) ({DateTimeUtils.format_date_time()})')
 
         executor = Executor.create(processes)
 
