@@ -22,3 +22,10 @@ k = 1024
 class Config:
     # File comparison (retrieving files for hashing)
     FILE_BLOCK_SIZE = 256 * k
+
+    # seconds
+    RETRY_WAIT = 1
+
+    # Retry for 1 hour
+    MAX_RETRIES = 60 * 60
+

@@ -36,7 +36,7 @@ from DateTimeUtils import DateTimeUtils
 
 class FolderSync:
     @staticmethod
-    def sync(source_path, destination_path, exclusions, processes = 1):
+    def sync(source_path, destination_path, exclusions, processes):
         start_time = time.perf_counter()
 
         source_path, destination_path = VerifyPaths.verify(source_path, destination_path)
@@ -187,12 +187,12 @@ class FolderSync:
 
             if destination_file_digest != source_file_digest:
                 errors += 1
-                error_message = f'\t*****Hash for "{file_source_path}" ({source_file_digest}) does not match hash for "{file_destination_path}" ({destination_file_digest}) *****'
+                error_message = f'\t*****Hash for "{file_source_path}" ({source_file_digest}) does not match hash for "{file_destination_path}" ({destination_file_digest}) ({DateTimeUtils.format_date_time()}) *****'
                 app_globals.log.print(error_message)
 
         try:
             if errors > 0:
-                error_message = f'\t*****UNSUCCESSFUL VERIFICATION OF COPIED FILES *****'
+                error_message = f'\t*****UNSUCCESSFUL VERIFICATION OF COPIED FILES ({DateTimeUtils.format_date_time()}) *****'
                 raise AppException(error_message)
             elif errors == 0:
                 app_globals.log.print(f'\tSuccessfully verified copied files')

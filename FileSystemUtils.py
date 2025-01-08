@@ -28,13 +28,14 @@ import platform
 from tenacity import *
 from StringLiterals import StringLiterals
 from AppException import AppException
-from Constants import Constants
+from DateTimeUtils import DateTimeUtils
+from Config import Config
 from Globals import app_globals
 
 
 def copy_file_before_callback(retry_state):
     if retry_state.attempt_number > 1:
-        app_globals.log.print(f'***** FileSystemUtils.copy_file: attempt_number: {retry_state.attempt_number} file path: {retry_state.args[1]}')
+        app_globals.log.print(f'***** FileSystemUtils.copy_file: attempt_number: {retry_state.attempt_number} file path: {retry_state.args[1]} ({DateTimeUtils.format_date_time()}) *****')
 
 
 class FileSystemUtils:
@@ -76,7 +77,7 @@ class FileSystemUtils:
                     windows_file_handle.close()
 
     @staticmethod
-    @retry(wait=wait_fixed(Constants.RETRY_WAIT), stop=stop_after_attempt(Constants.MAX_RETRIES),
+    @retry(wait=wait_fixed(Config.RETRY_WAIT), stop=stop_after_attempt(Config.MAX_RETRIES),
            before=copy_file_before_callback)
     def copy_file(source_file_path, destination_file_path):
         if os.path.exists(destination_file_path):

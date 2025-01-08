@@ -19,10 +19,5 @@
 
 
 class Constants:
-    # seconds
-    RETRY_WAIT = 1
-
-    MAX_RETRIES = 100
-
     EXIT_FAILURE = 1
 

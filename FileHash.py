@@ -20,25 +20,25 @@
 import hashlib
 import os
 from tenacity import *
-from Constants import Constants
 from AppException import AppException
 from Config import Config
+from DateTimeUtils import DateTimeUtils
 
 def before_callback(retry_state):
     if retry_state.attempt_number > 1:
-        print(f'***** FileHash.create_file_hash: attempt_number: {retry_state.attempt_number} file path: {retry_state.args[1]}')
+        print(f'***** FileHash.create_file_hash: attempt_number: {retry_state.attempt_number} file path: {retry_state.args[1]} ({DateTimeUtils.format_date_time()}) *****')
 
 
 def return_error_marker(retry_state):
     print(
-        f'***** FileHash.create_file_hash: failing after retries. attempt_number: {retry_state.attempt_number} File path: {retry_state.args[1]}')
+        f'***** FileHash.create_file_hash: failing after retries. attempt_number: {retry_state.attempt_number} File path: {retry_state.args[1]} ({DateTimeUtils.format_date_time()}) *****')
     return FileHash.ERROR_MARKER
 
 
 class FileHash:
     ERROR_MARKER = '<<ERROR>>'
 
-    @retry(wait=wait_fixed(Constants.RETRY_WAIT), stop=stop_after_attempt(Constants.MAX_RETRIES),
+    @retry(wait=wait_fixed(Config.RETRY_WAIT), stop=stop_after_attempt(Config.MAX_RETRIES),
            before=before_callback, retry_error_callback=return_error_marker)
     def create_file_hash(self, path):
         try:
@@ -63,7 +63,7 @@ class FileHash:
 
         except OSError as os_error:
             print(
-                f'***** FileHash.create_file_hash OSError cannot read file: {path} error: {os_error} *****')
+                f'***** FileHash.create_file_hash OSError cannot read file: {path} error: {os_error}  ({DateTimeUtils.format_date_time()}) *****')
             print(f'\terrorno: {os_error.errno} winerror: {os_error.winerror} strerror: {os_error.strerror} filename: {os_error.filename}')
 
             raise
