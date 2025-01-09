@@ -20,6 +20,13 @@
 k = 1024
 
 class Config:
+    """
+    Acceptable time difference, in seconds, for a presumably identical file to have in the source and destination
+    folders. They may differ slightly due to file system implementation differences.
+    """
+
+    ACCEPTABLE_TIME_DIFFERENCE = 60
+
     # File comparison (retrieving files for hashing)
     FILE_BLOCK_SIZE = 256 * k
 

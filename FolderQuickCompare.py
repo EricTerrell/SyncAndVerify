@@ -19,15 +19,23 @@
 
 import os
 from collections import namedtuple
+from tenacity import *
 from FolderMetadata import FolderMetadata
 from Executor import Executor
 from VerifyPaths import VerifyPaths
 from Globals import app_globals
 from AppException import AppException
+from DateTimeUtils import DateTimeUtils
+from Config import Config
+
+def before_callback(retry_state):
+    if retry_state.attempt_number > 1:
+        print(f'***** FolderQuickCompare: attempt_number: {retry_state.attempt_number} source: "{retry_state.args[0]}" destination: "{retry_state.args[1]}" ({DateTimeUtils.format_date_time()}) *****')
 
 
 class FolderQuickCompare:
     @staticmethod
+    @retry(wait=wait_fixed(Config.RETRY_WAIT), before=before_callback, stop=stop_after_attempt(Config.MAX_RETRIES))
     def compare(source_path, destination_path, exclusions, processes):
         try:
             source_path, destination_path = VerifyPaths.verify(source_path, destination_path, True)

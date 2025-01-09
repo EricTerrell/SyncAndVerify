@@ -22,6 +22,7 @@ import unittest
 from unittest.mock import Mock
 from FileMetadata import FileMetadata
 from BaseTest import BaseTest
+from Config import Config
 
 
 class TestFileMetadata(BaseTest):
@@ -64,7 +65,7 @@ class TestFileMetadata(BaseTest):
         file_metadata_a.metadata = TestFileMetadata._get_mock_metadata(original_metadata.metadata)
         mtime = file_metadata_a.metadata.st_ctime
 
-        file_metadata_a.metadata.st_mtime = mtime + FileMetadata.ACCEPTABLE_TIME_DIFFERENCE + 1
+        file_metadata_a.metadata.st_mtime = mtime + Config.ACCEPTABLE_TIME_DIFFERENCE + 1
 
         self.assertFalse(file_metadata_a.files_are_same(file_metadata_b))
 

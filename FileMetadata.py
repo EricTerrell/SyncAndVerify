@@ -18,17 +18,18 @@
 """
 
 import os
+from tenacity import *
 from FileSystemUtils import FileSystemUtils
+from Config import Config
+from DateTimeUtils import DateTimeUtils
 
+
+def before_callback(retry_state):
+    if retry_state.attempt_number > 1:
+        print(f'***** FileMetadata: attempt_number: {retry_state.attempt_number} root: "{retry_state.args[1]}" path: "{retry_state.args[2]}" ({DateTimeUtils.format_date_time()}) *****')
 
 class FileMetadata:
-    """
-    Acceptable time difference, in seconds, for a presumably identical file to have in the source and destination
-    folders. They may differ slightly due to file system implementation differences.
-    """
-
-    ACCEPTABLE_TIME_DIFFERENCE = 60
-
+    @retry(wait=wait_fixed(Config.RETRY_WAIT), before=before_callback, stop=stop_after_attempt(Config.MAX_RETRIES))
     def __init__(self, root, path):
         self.path = path[len(FileSystemUtils.canonical_folder_path(root)):len(path)]
         self.metadata = os.stat(path)
@@ -36,4 +37,4 @@ class FileMetadata:
     def files_are_same(self, other):
         return self.path == other.path and \
                self.metadata.st_size == other.metadata.st_size and \
-               abs(self.metadata.st_mtime - other.metadata.st_mtime) <= self.ACCEPTABLE_TIME_DIFFERENCE
+               abs(self.metadata.st_mtime - other.metadata.st_mtime) <= Config.ACCEPTABLE_TIME_DIFFERENCE

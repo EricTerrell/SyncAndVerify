@@ -18,16 +18,23 @@
 """
 
 import os
+from tenacity import *
+from Config import Config
 from FileMetadata import FileMetadata
 from FileSystemUtils import FileSystemUtils
 from AppException import AppException
 
+
+def before_callback(retry_state):
+    if retry_state.attempt_number > 1:
+        print(f'***** FileMetadata: attempt_number: {retry_state.attempt_number} root: "{retry_state.args[1]}" path: "{retry_state.args[2]}" ({DateTimeUtils.format_date_time()}) *****')
 
 class FolderMetadata:
     def __init__(self, root, exclusions):
         self.root = FileSystemUtils.canonical_folder_path(root)
         self.exclusions = exclusions
 
+    @retry(wait=wait_fixed(Config.RETRY_WAIT), before=before_callback, stop=stop_after_attempt(Config.MAX_RETRIES))
     def get_metadata(self):
         folders = []
 
