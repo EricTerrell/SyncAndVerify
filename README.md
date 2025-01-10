@@ -5,7 +5,7 @@ SyncAndVerify
 * Compare two folders by comparing file metadata
 * Compare two folders by comparing file contents
 
-Note: The sync process does a read-back of all copied files and verifies that each file was copied correctly. However, if some or all of the files were read from the filesystem cache, this verification step will not be definitive.
+The sync process does a read-back of all copied files and verifies that each file was copied correctly. However, if some or all of the files are read from the filesystem cache, this verification step will not be definitive.
 
 One can specify a list of folders to ignore when doing a sync or comparison. This exclusion mechanism is currently only available via the programmatic interface, not from the command line.
 # Copyright
