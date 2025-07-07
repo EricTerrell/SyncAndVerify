@@ -44,7 +44,7 @@ class TestErrorHandling(BaseTest):
         self.assertTrue(len(comparison.files_to_delete) == 0)
         self.assertTrue(len(comparison.files_to_copy_metadata) == 706)
 
-        FolderSync.sync(source_path, destination_path, exclusions)
+        FolderSync.sync(source_path, destination_path, exclusions, 1)
 
         comparison = FolderQuickCompare.compare(source_path, destination_path, exclusions)
 
@@ -53,7 +53,7 @@ class TestErrorHandling(BaseTest):
         self.assertTrue(len(comparison.files_to_delete) == 0)
         self.assertTrue(len(comparison.files_to_copy_metadata) == 0)
 
-        comparison = FolderCompleteCompare.compare(source_path, destination_path, exclusions)
+        comparison = FolderCompleteCompare.compare(source_path, destination_path, exclusions, 1)
 
         self.assertTrue(len(comparison.files_in_source_folder_only) == 0)
         self.assertTrue(len(comparison.files_in_destination_folder_only) == 0)

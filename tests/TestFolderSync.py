@@ -49,7 +49,7 @@ class TestFolderSync(BaseTest):
         source_path = 'Z:\\Photos'
         destination_path = 'F:\\backup-test\\Photos'
 
-        FolderSync.sync(source_path, destination_path, TestFolderSync._exclusions)
+        FolderSync.sync(source_path, destination_path, TestFolderSync._exclusions, 1)
 
         comparison = FolderQuickCompare.compare(source_path, destination_path, TestFolderSync._exclusions)
 
@@ -58,7 +58,7 @@ class TestFolderSync(BaseTest):
         self.assertTrue(len(comparison.files_to_delete) == 0)
         self.assertTrue(len(comparison.files_to_copy_metadata) == 0)
 
-        comparison = FolderCompleteCompare.compare(source_path, destination_path, TestFolderSync._exclusions)
+        comparison = FolderCompleteCompare.compare(source_path, destination_path, TestFolderSync._exclusions, 1)
 
         self.assertTrue(len(comparison.files_in_source_folder_only) == 0)
         self.assertTrue(len(comparison.files_in_destination_folder_only) == 0)
