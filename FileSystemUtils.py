@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2025, Eric Bergman-Terrell
+  (C) Copyright 2026, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -14,17 +14,22 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    See the GNU General Public License: <http://www.gnu.org/licenses/>.
+    See the GNU General Public License: <https://www.gnu.org/licenses/>.
 """
 
 import os
 import stat
-import win32file
-import win32api
-import win32con
-import pywintypes
-import shutil
 import platform
+import sys
+if sys.platform == "win32":
+    import win32file
+if sys.platform == "win32":
+    import win32api
+if sys.platform == "win32":
+    import win32con
+if sys.platform == "win32":
+    import pywintypes
+import shutil
 from tenacity import *
 from StringLiterals import StringLiterals
 from AppException import AppException

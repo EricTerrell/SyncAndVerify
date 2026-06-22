@@ -1,6 +1,6 @@
 """
   SyncAndVerify
-  (C) Copyright 2025, Eric Bergman-Terrell
+  (C) Copyright 2026, Eric Bergman-Terrell
 
   This file is part of SyncAndVerify.
 
@@ -14,7 +14,7 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    See the GNU General Public License: <http://www.gnu.org/licenses/>.
+    See the GNU General Public License: <https://www.gnu.org/licenses/>.
 """
 
 import os
@@ -36,7 +36,7 @@ from datetime import timedelta
 
 
 def print_usage_and_exit():
-    app_globals.log.print('usage: {s (sync)|qc (quick compare)|cc (complete compare)} {source folder} {destination folder} {log root folder} {# processes or threads (1 or 2)}')
+    app_globals.log.print('usage: {s (sync)|qc (quick compare)|cc (complete compare)} {source folder} {destination folder} {log root folder} {# processes or threads (1 or 2)} {optional exclusions}')
     sys.exit(Constants.EXIT_FAILURE)
 
 
@@ -45,7 +45,7 @@ def main():
 
     app_globals.log = Log()
 
-    if len(sys.argv) == 6:
+    if len(sys.argv) >= 6:
         verb = sys.argv[1].upper()
 
         if verb not in {'S', 'QC', 'CC'}:
@@ -55,7 +55,11 @@ def main():
         destination_path = sys.argv[3]
         log_root = sys.argv[4]
         processes = int(sys.argv[5])
-        exclusions = []
+
+        if len(sys.argv) >= 7:
+            exclusions = sys.argv[6:]
+        else:
+            exclusions = []
 
         if processes < 1 or processes > 2:
             raise AppException('# processes must be 1 or 2')

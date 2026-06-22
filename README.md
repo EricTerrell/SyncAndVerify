@@ -1,4 +1,4 @@
-# SyncAndVerify for Windows
+# SyncAndVerify for Windows and Linux
 
 SyncAndVerify
 * Sync two folders
@@ -8,9 +8,10 @@ SyncAndVerify
 The sync process does a read-back of all copied files and verifies that each file was copied correctly. However, if some or all of the files are read from the filesystem cache, this verification step will not be definitive.
 
 One can specify a list of folders to ignore when doing a sync or comparison. This exclusion mechanism is currently only available via the programmatic interface, not from the command line.
+
 # Copyright
 
-SyncAndVerify &#169; Copyright 2025, [`Eric Bergman-Terrell`](https://www.ericbt.com)
+SyncAndVerify &#169; Copyright 2026, [`Eric Bergman-Terrell`](https://www.ericbt.com)
 
 # Links
 
